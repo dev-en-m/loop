@@ -44,7 +44,7 @@ Slices (each independently shippable and verifiable):
 - [x] 5. `feat/library-api`: `/api/v1/channels`, `/api/v1/library`.
 - [x] 6. `feat/web-list-ui`: `web/` React/Vite with channel + kind filters.
 - [x] 7. `chore/docker-readme`: Dockerfile/requirements pins, daily schedule docs, root README.
-- [ ] 8. `feat/blocked-channels`: `api/blocked_channels.txt`; sync skips blocked ids and purges their stored rows.
+- [x] 8. `feat/blocked-channels`: `api/blocked_channels.txt`; sync skips blocked ids and purges their stored rows.
 
 `CLAUDE.md` content (workflow section):
 - Work in vertical slices; one slice = one branch (`feat/...`, `fix/...`, `docs/...`) from up-to-date `main`.

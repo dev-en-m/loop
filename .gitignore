@@ -4,3 +4,6 @@ app.db
 last_run_by_channel.json
 token.json
 client_secret*.json
+web/node_modules
+web/dist
+web/.env

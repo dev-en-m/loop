@@ -34,13 +34,20 @@ def get_videos(
     if not DB_PATH.exists():
         return {"data": [], "nextCursor": None, "hasMore": False}
 
-    with sqlite3.connect(DB_PATH) as db:
-        rows = db.execute("""
-            SELECT video_id
-            FROM videos
-            ORDER BY published_at DESC
-            LIMIT ? OFFSET ?
-        """, (limit + 1, after)).fetchall()
+    try:
+        with sqlite3.connect(DB_PATH) as db:
+            rows = db.execute("""
+                SELECT v.video_id
+                FROM videos v
+                JOIN subscriptions s ON s.channel_id = v.channel_id
+                WHERE v.is_short = 1
+                ORDER BY v.published_at DESC, v.video_id
+                LIMIT ? OFFSET ?
+            """, (limit + 1, after)).fetchall()
+    except sqlite3.OperationalError as err:
+        if "no such table" not in str(err):
+            raise
+        rows = []  # tables not created yet, ingest has not run
 
     ids = [row[0] for row in rows[:limit]]
     has_more = len(rows) > limit

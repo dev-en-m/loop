@@ -37,8 +37,8 @@ Decisions (from user): OAuth subscriptions; single user; one-time CLI consent; a
 Not one big change. Each slice = own branch off fresh `main`, own PR, **stop and wait for user approval/merge** before starting the next. After approval: first copy this plan to `PLAN.md` at repo root and create `CLAUDE.md` (workflow rules below) on branch `docs/plan-and-workflow`, PR, wait.
 
 Slices (each independently shippable and verifiable):
-- [ ] 1. `docs/plan-and-workflow`: `PLAN.md` + `CLAUDE.md`.
-- [ ] 2. `feat/oauth-subscriptions`: `auth_youtube.py`, `subscriptions` table, subscription sync, requirements/.env/.gitignore. Verify: table filled with real subs.
+- [x] 1. `docs/plan-and-workflow`: `PLAN.md` + `CLAUDE.md`.
+- [x] 2. `feat/oauth-subscriptions`: `auth_youtube.py`, `subscriptions` table, subscription sync, requirements/.env/.gitignore. Verify: table filled with real subs.
 - [ ] 3. `feat/uploads-ingest`: uploads-playlist ingest, 50-id batching, `is_short`, indexes/migration, per-channel error handling. Verify: videos rows + quota sane.
 - [ ] 4. `feat/subscribed-shorts-feed`: `/api/v1/videos` JOIN subscriptions + `is_short=1`. Verify: unchanged `ui/` shows only subscribed Shorts.
 - [ ] 5. `feat/library-api`: `/api/v1/channels`, `/api/v1/library`.

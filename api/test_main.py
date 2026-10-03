@@ -42,6 +42,41 @@ def test_feed_only_subscribed_shorts():
             pass
 
 
+def test_channels_and_library():
+    with tempfile.TemporaryDirectory() as d:
+        main.DB_PATH = Path(d) / "app.db"
+        assert main.get_channels() == [] and main.get_library()["data"] == []  # no db
+
+        db = sqlite3.connect(main.DB_PATH)
+        db.execute("CREATE TABLE subscriptions (channel_id TEXT PRIMARY KEY, title TEXT, thumbnail TEXT, synced_at TEXT)")
+        db.execute("CREATE TABLE videos (video_id TEXT, channel_id TEXT, title TEXT, published_at TEXT, duration_seconds INTEGER, is_short INTEGER)")
+        db.executemany("INSERT INTO subscriptions VALUES (?,?,?,'')", [("a", "Alpha", "ta"), ("b", "beta", "tb"), ("c", "Empty", "tc")])
+        db.executemany("INSERT INTO videos VALUES (?,?,?,?,?,?)", [
+            ("a1", "a", "A one", "2026-01-01", 30, 1),
+            ("a2", "a", "A two", "2026-01-03", 600, 0),
+            ("b1", "b", "B one", "2026-01-02", 20, 1),
+            ("x1", "nosub", "X", "2026-01-04", 20, 1),  # not subscribed
+        ])
+        db.commit()
+
+        channels = main.get_channels()
+        assert [(c["title"], c["video_count"]) for c in channels] == [("Alpha", 2), ("beta", 1), ("Empty", 0)]
+
+        ids = lambda **kw: [v["video_id"] for v in main.get_library(**kw)["data"]]
+        assert ids() == ["a2", "b1", "a1"]
+        assert ids(channel_id="a") == ["a2", "a1"]
+        assert ids(kind="short") == ["b1", "a1"]
+        assert ids(kind="long") == ["a2"]
+        assert ids(channel_id="a", kind="short") == ["a1"]
+        assert ids(channel_id="zzz") == []
+        first = main.get_library(limit=2)
+        assert first["hasMore"] and first["nextCursor"] == 2 and ids(limit=2, after=2) == ["a1"]
+        v = first["data"][0]
+        assert v["is_short"] is False and v["channel_title"] == "Alpha"
+        assert v["thumbnail"].endswith("/a2/hqdefault.jpg") and v["url"].endswith("v=a2")
+
+
 if __name__ == "__main__":
     test_feed_only_subscribed_shorts()
+    test_channels_and_library()
     print("ok")

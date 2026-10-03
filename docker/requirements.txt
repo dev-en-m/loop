@@ -3,4 +3,3 @@ python-dotenv
 requests
 uvicorn
 google-auth
-google-auth-oauthlib

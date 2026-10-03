@@ -8,6 +8,7 @@ from pathlib import Path
 
 import requests
 from dotenv import load_dotenv
+from google.auth.exceptions import RefreshError
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 
@@ -36,7 +37,7 @@ GOOGLE_YT_VIDEOS_URL = os.environ.get(
 
 def fetch_subscriptions():
     if not TOKEN_FILE.exists():
-        raise SystemExit(f"{TOKEN_FILE} missing, run api/auth_youtube.py first")
+        raise FileNotFoundError(f"{TOKEN_FILE} missing, run api/auth_youtube.py first")
     creds = Credentials.from_authorized_user_file(str(TOKEN_FILE))
     creds.refresh(Request())
 
@@ -67,6 +68,8 @@ def fetch_subscriptions():
 
 def sync_subscriptions(db, synced_at):
     subs = fetch_subscriptions()
+    if not subs:
+        raise ValueError("subscriptions.list returned 0 items, keeping existing rows")
     db.executemany("""
         INSERT INTO subscriptions (channel_id, title, thumbnail, synced_at)
         VALUES (?, ?, ?, ?)
@@ -223,7 +226,10 @@ def main():
                 synced_at TEXT NOT NULL
             )
         """)
-        print(f"subscriptions={sync_subscriptions(db, run_started_at.isoformat())}")
+        try:
+            print(f"subscriptions={sync_subscriptions(db, run_started_at.isoformat())}")
+        except (OSError, ValueError, RefreshError, requests.RequestException) as err:
+            print(f"subscriptions sync failed: {err}", flush=True)
         for channel in channels:
             try:
                 found, saved = ingest_channel(db, api_key, channel, state, run_started_at)

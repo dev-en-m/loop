@@ -92,9 +92,13 @@ def parse_duration_seconds(duration):
         duration,
     )
     if not match:
-        return 0
+        return None  # e.g. P1DT2H for videos over a day, or P0D for live
     hours, minutes, seconds = (int(part or 0) for part in match.groups())
     return hours * 3600 + minutes * 60 + seconds
+
+
+OLD_STREAK_STOP = 10  # consecutive items older than the cutoff before we stop paging
+OVERLAP = timedelta(days=1)  # re-scan the previous run's tail to catch premieres going live
 
 
 def list_upload_ids(api_key, channel_id, published_after):
@@ -105,7 +109,7 @@ def list_upload_ids(api_key, channel_id, published_after):
         "maxResults": 50,
         "key": api_key,
     }
-    ids = []
+    ids, old_streak = [], 0
     while True:
         response = requests.get(GOOGLE_YT_PLAYLIST_ITEMS_URL, params=params, timeout=30)
         response.raise_for_status()
@@ -115,8 +119,14 @@ def list_upload_ids(api_key, channel_id, published_after):
             published_at = details.get("videoPublishedAt")
             if not published_at:  # private or deleted
                 continue
-            if published_at < published_after:  # newest first, so we are done
-                return ids
+            if published_at < published_after:
+                # playlist is ordered by upload time, not publish time: a scheduled or
+                # formerly private video can sit below older ones, so look a bit further
+                old_streak += 1
+                if old_streak >= OLD_STREAK_STOP:
+                    return ids
+                continue
+            old_streak = 0
             ids.append(details["videoId"])
         if not data.get("nextPageToken"):
             return ids
@@ -137,20 +147,22 @@ def fetch_video_details(api_key, video_ids):
         )
         response.raise_for_status()
         for item in response.json().get("items", []):
+            snippet = item.get("snippet", {})
+            if snippet.get("liveBroadcastContent", "none") != "none":
+                continue  # live or upcoming: duration is not final, picked up once finished
             duration_seconds = parse_duration_seconds(
                 item.get("contentDetails", {}).get("duration", "")
             )
-            snippet = item.get("snippet", {})
             video_id = item["id"]
             videos.append({
                 "video_id": video_id,
                 "channel_id": snippet.get("channelId", ""),
                 "title": snippet.get("title", ""),
                 "published_at": snippet.get("publishedAt", ""),
-                "duration_seconds": duration_seconds,
+                "duration_seconds": duration_seconds or 0,
                 # ponytail: duration heuristic, Shorts can be up to 3 min but so can normal videos.
                 # Exact check = probe youtube.com/shorts/<id> for a redirect.
-                "is_short": int(duration_seconds <= 180),
+                "is_short": int(duration_seconds is not None and duration_seconds <= 180),
                 "youtube_url": f"https://www.youtube.com/watch?v={video_id}",
             })
     return videos
@@ -158,15 +170,17 @@ def fetch_video_details(api_key, video_ids):
 
 def ingest_channel(db, api_key, channel, state, run_started_at):
     channel_id = channel["channel_id"]
-    published_after = state.get(channel_id)
-    if not published_after:
-        published_after = (
-            run_started_at - timedelta(days=10)
-        ).isoformat().replace("+00:00", "Z")
+    last_run = state.get(channel_id)
+    if last_run:
+        since = datetime.fromisoformat(last_run.replace("Z", "+00:00")) - OVERLAP
+    else:
+        since = run_started_at - timedelta(days=10)
+    published_after = since.isoformat().replace("+00:00", "Z")
 
     run_started_at_iso = run_started_at.isoformat().replace("+00:00", "Z")
     ids = list_upload_ids(api_key, channel_id, published_after)
     videos = fetch_video_details(api_key, ids)
+    changes_before = db.total_changes
     db.executemany("""
         INSERT OR IGNORE INTO videos (
             video_id, channel_id, title, published_at, duration_seconds, is_short, youtube_url
@@ -174,6 +188,7 @@ def ingest_channel(db, api_key, channel, state, run_started_at):
             :video_id, :channel_id, :title, :published_at, :duration_seconds, :is_short, :youtube_url
         )
     """, videos)
+    inserted = db.total_changes - changes_before
 
     state[channel_id] = run_started_at_iso
     db.execute("""
@@ -187,7 +202,7 @@ def ingest_channel(db, api_key, channel, state, run_started_at):
     # saved after the commit so a crash re-fetches at worst (INSERT OR IGNORE)
     STATE_FILE.write_text(json.dumps(state, indent=2, sort_keys=True) + "\n")
 
-    return len(ids), sum(v["is_short"] for v in videos)
+    return len(ids), inserted
 
 
 def main():
@@ -241,7 +256,7 @@ def main():
         for channel in channels:
             try:
                 found, saved = ingest_channel(db, api_key, channel, state, run_started_at)
-                print(f"{channel['handle']}: found={found} shorts={saved}")
+                print(f"{channel['handle']}: found={found} new={saved}")
             except requests.RequestException as err:
                 print(f"{channel['handle']}: failed {err}", flush=True)
 

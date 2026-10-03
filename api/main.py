@@ -86,10 +86,10 @@ def get_library(
 ):
     rows = query("""
         SELECT v.video_id, v.channel_id, s.title AS channel_title, v.title,
-               v.published_at, v.duration_seconds, v.is_short
+               v.published_at, v.duration_seconds, v.is_short, v.youtube_url AS url
         FROM videos v
         JOIN subscriptions s ON s.channel_id = v.channel_id
-        WHERE (:channel_id IS NULL OR v.channel_id = :channel_id)
+        WHERE (:channel_id IS NULL OR :channel_id = '' OR v.channel_id = :channel_id)
           AND (:kind = 'all' OR v.is_short = (:kind = 'short'))
         ORDER BY v.published_at DESC, v.video_id
         LIMIT :limit OFFSET :after
@@ -99,7 +99,6 @@ def get_library(
             **dict(row),
             "is_short": bool(row["is_short"]),
             "thumbnail": f"https://i.ytimg.com/vi/{row['video_id']}/hqdefault.jpg",
-            "url": f"https://www.youtube.com/watch?v={row['video_id']}",
         }
         for row in rows
     ]

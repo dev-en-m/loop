@@ -49,13 +49,16 @@ def test_channels_and_library():
 
         db = sqlite3.connect(main.DB_PATH)
         db.execute("CREATE TABLE subscriptions (channel_id TEXT PRIMARY KEY, title TEXT, thumbnail TEXT, synced_at TEXT)")
-        db.execute("CREATE TABLE videos (video_id TEXT, channel_id TEXT, title TEXT, published_at TEXT, duration_seconds INTEGER, is_short INTEGER)")
+        db.execute("CREATE TABLE videos (video_id TEXT, channel_id TEXT, title TEXT, published_at TEXT, duration_seconds INTEGER, is_short INTEGER, youtube_url TEXT)")
         db.executemany("INSERT INTO subscriptions VALUES (?,?,?,'')", [("a", "Alpha", "ta"), ("b", "beta", "tb"), ("c", "Empty", "tc")])
-        db.executemany("INSERT INTO videos VALUES (?,?,?,?,?,?)", [
-            ("a1", "a", "A one", "2026-01-01", 30, 1),
-            ("a2", "a", "A two", "2026-01-03", 600, 0),
-            ("b1", "b", "B one", "2026-01-02", 20, 1),
-            ("x1", "nosub", "X", "2026-01-04", 20, 1),  # not subscribed
+        db.executemany("INSERT INTO videos VALUES (?,?,?,?,?,?,?)", [
+            (i, c, t, d, n, s, f"https://www.youtube.com/watch?v={i}")
+            for i, c, t, d, n, s in [
+                ("a1", "a", "A one", "2026-01-01", 30, 1),
+                ("a2", "a", "A two", "2026-01-03", 600, 0),
+                ("b1", "b", "B one", "2026-01-02", 20, 1),
+                ("x1", "nosub", "X", "2026-01-04", 20, 1),  # not subscribed
+            ]
         ])
         db.commit()
 
@@ -64,6 +67,7 @@ def test_channels_and_library():
 
         ids = lambda **kw: [v["video_id"] for v in main.get_library(**kw)["data"]]
         assert ids() == ["a2", "b1", "a1"]
+        assert ids(channel_id="") == ["a2", "b1", "a1"]  # empty param (UI "All") means no filter
         assert ids(channel_id="a") == ["a2", "a1"]
         assert ids(kind="short") == ["b1", "a1"]
         assert ids(kind="long") == ["a2"]

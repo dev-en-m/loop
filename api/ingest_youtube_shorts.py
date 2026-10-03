@@ -16,6 +16,7 @@ DATA_DIR = Path(os.environ.get("DATA_DIR", BASE_DIR))
 
 DB_PATH = DATA_DIR / "app.db"
 STATE_FILE = DATA_DIR / "last_run_by_channel.json"
+BLOCKED_FILE = BASE_DIR / "blocked_channels.txt"
 TOKEN_FILE = DATA_DIR / "token.json"
 
 GOOGLE_YT_PLAYLIST_ITEMS_URL = os.environ.get(
@@ -63,10 +64,20 @@ def fetch_subscriptions():
             return subs
 
 
+def load_blocked():
+    lines = (line.split("#")[0].strip() for line in BLOCKED_FILE.read_text().splitlines())
+    return {line for line in lines if line}
+
+
 def sync_subscriptions(db, synced_at):
     subs = fetch_subscriptions()
     if not subs:
         raise ValueError("subscriptions.list returned 0 items, keeping existing rows")
+    blocked = load_blocked()
+    subs = [sub for sub in subs if sub[0] not in blocked]
+    marks = ",".join("?" * len(blocked))
+    for table in ("videos", "channel_activity"):  # drop anything stored before the block
+        db.execute(f"DELETE FROM {table} WHERE channel_id IN ({marks})", list(blocked))
     db.executemany("""
         INSERT INTO subscriptions (channel_id, title, thumbnail, synced_at)
         VALUES (?, ?, ?, ?)
@@ -252,6 +263,8 @@ def main():
             print(f"subscriptions={sync_subscriptions(db, run_started_at.isoformat())}")
         except (OSError, ValueError, RefreshError, requests.RequestException) as err:
             print(f"subscriptions sync failed: {err}", flush=True)
+        for channel_id in load_blocked():  # unblocked channels re-backfill like new subs
+            state.pop(channel_id, None)
         channels = load_channels(db)
         for channel in channels:
             try:

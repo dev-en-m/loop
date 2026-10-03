@@ -8,6 +8,8 @@ from pathlib import Path
 
 import requests
 from dotenv import load_dotenv
+from google.auth.transport.requests import Request
+from google.oauth2.credentials import Credentials
 
 BASE_DIR = Path(__file__).resolve().parent
 ROOT_DIR = BASE_DIR.parent
@@ -16,15 +18,67 @@ DATA_DIR = Path(os.environ.get("DATA_DIR", BASE_DIR))
 CHANNELS_CSV = ROOT_DIR / "csv" / "channels_with_ids.csv"
 DB_PATH = DATA_DIR / "app.db"
 STATE_FILE = DATA_DIR / "last_run_by_channel.json"
+TOKEN_FILE = DATA_DIR / "token.json"
 
 GOOGLE_YT_SEARCH_URL = os.environ.get(
     "GOOGLE_YT_SEARCH_URL",
     "https://www.googleapis.com/youtube/v3/search",
 )
+GOOGLE_YT_SUBS_URL = os.environ.get(
+    "GOOGLE_YT_SUBS_URL",
+    "https://www.googleapis.com/youtube/v3/subscriptions",
+)
 GOOGLE_YT_VIDEOS_URL = os.environ.get(
     "GOOGLE_YT_VIDEOS_URL",
     "https://www.googleapis.com/youtube/v3/videos",
 )
+
+
+def fetch_subscriptions():
+    if not TOKEN_FILE.exists():
+        raise SystemExit(f"{TOKEN_FILE} missing, run api/auth_youtube.py first")
+    creds = Credentials.from_authorized_user_file(str(TOKEN_FILE))
+    creds.refresh(Request())
+
+    subs, page_token = [], None
+    while True:
+        params = {"part": "snippet", "mine": "true", "maxResults": 50}
+        if page_token:
+            params["pageToken"] = page_token
+        response = requests.get(
+            GOOGLE_YT_SUBS_URL,
+            params=params,
+            headers={"Authorization": f"Bearer {creds.token}"},
+            timeout=30,
+        )
+        response.raise_for_status()
+        data = response.json()
+        for item in data.get("items", []):
+            snippet = item["snippet"]
+            subs.append((
+                snippet["resourceId"]["channelId"],
+                snippet.get("title", ""),
+                snippet.get("thumbnails", {}).get("default", {}).get("url", ""),
+            ))
+        page_token = data.get("nextPageToken")
+        if not page_token:
+            return subs
+
+
+def sync_subscriptions(db, synced_at):
+    subs = fetch_subscriptions()
+    db.executemany("""
+        INSERT INTO subscriptions (channel_id, title, thumbnail, synced_at)
+        VALUES (?, ?, ?, ?)
+        ON CONFLICT(channel_id) DO UPDATE SET
+            title = excluded.title,
+            thumbnail = excluded.thumbnail,
+            synced_at = excluded.synced_at
+    """, [(*sub, synced_at) for sub in subs])
+    # unsubscribed channels keep an older synced_at
+    db.execute("DELETE FROM subscriptions WHERE synced_at != ?", (synced_at,))
+    db.commit()
+    return len(subs)
 
 
 def load_channels():
@@ -161,6 +215,15 @@ def main():
                 last_run_at TEXT NOT NULL
             )
         """)
+        db.execute("""
+            CREATE TABLE IF NOT EXISTS subscriptions (
+                channel_id TEXT PRIMARY KEY,
+                title TEXT NOT NULL,
+                thumbnail TEXT NOT NULL,
+                synced_at TEXT NOT NULL
+            )
+        """)
+        print(f"subscriptions={sync_subscriptions(db, run_started_at.isoformat())}")
         for channel in channels:
             try:
                 found, saved = ingest_channel(db, api_key, channel, state, run_started_at)

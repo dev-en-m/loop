@@ -80,6 +80,14 @@ def test_fetch_details_batches():
 
 
 def test_blocked_channels():
+    saved = m.BLOCKED_FILE, m.fetch_subscriptions
+    try:
+        _test_blocked_channels()
+    finally:
+        m.BLOCKED_FILE, m.fetch_subscriptions = saved
+
+
+def _test_blocked_channels():
     with tempfile.TemporaryDirectory() as d:
         m.BLOCKED_FILE = Path(d) / "blocked.txt"
         m.BLOCKED_FILE.write_text("# header\nUCbad  # News\n\n")

@@ -1,0 +1,36 @@
+:root {
+  color-scheme: light dark;
+  --bg: #fff;
+  --fg: #111;
+  --muted: #666;
+  --line: #ddd;
+  --accent: #c00;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #111;
+    --fg: #eee;
+    --muted: #999;
+    --line: #333;
+    --accent: #f55;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.4 system-ui, sans-serif; }
+main { max-width: 1200px; margin: 0 auto; padding: 16px; }
+header { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; position: sticky; top: 0; padding: 8px 0; background: var(--bg); }
+select, button { font: inherit; color: inherit; background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 6px 12px; }
+select { min-width: 220px; max-width: 100%; }
+.kinds { display: flex; gap: 4px; }
+button { cursor: pointer; }
+button.on { border-color: var(--accent); color: var(--accent); }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
+.card { color: inherit; text-decoration: none; }
+.thumb { position: relative; aspect-ratio: 16 / 9; background: var(--line); border-radius: 8px; overflow: hidden; }
+.thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.thumb span { position: absolute; right: 6px; bottom: 6px; padding: 1px 5px; border-radius: 4px; background: rgba(0, 0, 0, 0.8); color: #fff; font-size: 12px; }
+.card h3 { margin: 8px 0 2px; font-size: 15px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.card p { margin: 0; color: var(--muted); font-size: 13px; }
+.more { display: block; margin: 24px auto; }
+.error { color: var(--accent); }
+.empty { color: var(--muted); }

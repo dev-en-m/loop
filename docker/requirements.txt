@@ -1,5 +1,6 @@
-fastapi
-python-dotenv
-requests
-uvicorn
-google-auth
+fastapi==0.128.8
+google-auth==2.50.0
+python-dotenv==1.2.1
+requests==2.32.5
+typing_extensions==4.16.0
+uvicorn==0.39.0

@@ -1,0 +1,30 @@
+# Channels hidden from the app and never stored. One channel id per line, "#" starts a comment.
+# News / politics
+UCN7B-QD0Qgn2boVH5Q0pOWg  # BBC News Hindi
+UCIALMKvObZNtJ6AmdCLP7Lg  # Bloomberg Television
+UCCgQaXjsJ6EdFPZeTFQoSyw  # Brut India
+UC13KrBW4je1iUkEhIZO15AQ  # Indian Express Hindi
+UCustbySVJGb659WDpdkeATg  # newslaundry
+UCehBVAPy-bxmnbNARF-_tvA  # More Perfect Union
+UCVOW945-eZUL5ZKB4F7zhLw  # Dil se with Kapil Sibal
+UCHJuQZuzapBh-CuhRYxIZrg  # Insider
+# Travel / lifestyle
+UCHL9bfHTxCMi-7vfxQ-AYtg  # Abroad in Japan
+UCDTINI9skkeZNY2ZXnBqIkQ  # Eva zu Beck
+UCiQ_ZCp_pLUrzGGnYnhDBkQ  # Unboxing Bengaluru
+UCoxPghkIDTPxtgZV4Zx8tMw  # yatri doctor
+UCWN88caEt9Pj7FqdKjUHcqQ  # Ravish Vlogs
+UCiH3YIYdoVpGb0MAa3LfgUg  # Life With Shamani
+UC7tQxAzdstcn9p1zlxw39nA  # Mix it up with Mendi
+UCxZH0aZnRfxs-HVjm6fEWZQ  # Holistic Fitness with Tronzy
+UCZCCr5hY5scv-j9l368GbTw  # Practical_Psychology
+UCh8gHdtzO2tXd593_bjErWg  # Doobydobap
+# Entertainment / music
+UCth1JdU_n065AJjWomYXmWg  # Official George Carlin
+UC0rE2qq81of4fojo-KhO5rg  # Tanmay Bhat
+UCblfuW_4rakIf2h6aqANefA  # Red Bull
+UCigQP10VTaXEtOgXh0A-btg  # RockStar Games Music
+UCctMH-Ubed9e2o2ZkDJAo_g  # Satinder Sartaaj
+UCm22FAXZMw1BaWeFszZxUKw  # Kitboga
+UCC9EjyMN_hx5NdctLBx5X7w  # Scammer Payback
+UC4pEm3-yshBWa7nH3sQIKHQ  # Joshua Citarella

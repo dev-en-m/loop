@@ -9,7 +9,7 @@ WORKDIR /app
 COPY docker/requirements.txt /tmp/requirements.txt
 RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
-COPY api/main.py api/ingest_youtube_shorts.py api/
+COPY api/main.py api/ingest_youtube_shorts.py api/blocked_channels.txt api/
 RUN mkdir -p /app/data
 
 EXPOSE 8000

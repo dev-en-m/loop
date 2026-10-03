@@ -28,6 +28,10 @@ Docker for the API and ingest: `docker/README.md`.
 | `GET /api/v1/library?channel_id&kind=all\|short\|long&limit&after` | Video objects, subscribed channels only |
 | `GET /health` | `{"ok": true}` |
 
+## Blocked channels
+
+Add a channel id to `api/blocked_channels.txt` to hide it and stop storing its videos. The next ingest run removes its existing rows.
+
 ## Tests
 
 `venv/bin/python api/test_main.py` and `venv/bin/python api/test_ingest.py`

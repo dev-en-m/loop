@@ -79,7 +79,27 @@ def test_fetch_details_batches():
     assert len(out) == 119 and len(calls) == 3  # v2 is live
 
 
+def test_blocked_channels():
+    with tempfile.TemporaryDirectory() as d:
+        m.BLOCKED_FILE = Path(d) / "blocked.txt"
+        m.BLOCKED_FILE.write_text("# header\nUCbad  # News\n\n")
+        m.fetch_subscriptions = lambda: [("UCgood", "Good", ""), ("UCbad", "News", "")]
+        db = sqlite3.connect(":memory:")
+        db.execute("CREATE TABLE videos (video_id TEXT, channel_id TEXT)")
+        db.execute("CREATE TABLE channel_activity (channel_id TEXT)")
+        db.execute("""CREATE TABLE subscriptions (channel_id TEXT PRIMARY KEY, title TEXT,
+            thumbnail TEXT, synced_at TEXT)""")
+        db.executemany("INSERT INTO videos VALUES (?, ?)", [("a", "UCbad"), ("b", "UCgood")])
+        db.execute("INSERT INTO channel_activity VALUES ('UCbad')")
+        db.execute("INSERT INTO subscriptions VALUES ('UCbad', 'News', '', 'old')")
+        assert m.sync_subscriptions(db, "now") == 1
+        assert db.execute("select channel_id from subscriptions").fetchall() == [("UCgood",)]
+        assert db.execute("select video_id from videos").fetchall() == [("b",)]
+        assert db.execute("select count(*) from channel_activity").fetchone() == (0,)
+
+
 if __name__ == "__main__":
+    test_blocked_channels()
     test_ingest_channel()
     test_fetch_details_batches()
     print("ok")

@@ -39,7 +39,8 @@ def fake_get_factory(calls):
         return Resp({"items": [
             {"id": i, "snippet": {"channelId": "UCabc", "title": i, "publishedAt": "x",
                                   "liveBroadcastContent": "live" if i == "v2" else "none"},
-             "contentDetails": {"duration": DURATIONS.get(i, "PT10M")}}
+             "contentDetails": {"duration": DURATIONS.get(i, "PT10M")},
+             "statistics": {"viewCount": "7"} if i != "v0" else {}}
             for i in ids
         ]})
     return fake_get
@@ -52,7 +53,7 @@ def test_ingest_channel():
         m.STATE_FILE = Path(d) / "state.json"
         db = sqlite3.connect(":memory:")
         db.execute("""CREATE TABLE videos (video_id TEXT PRIMARY KEY, channel_id TEXT, title TEXT,
-            published_at TEXT, duration_seconds INTEGER, is_short INTEGER, youtube_url TEXT)""")
+            published_at TEXT, duration_seconds INTEGER, is_short INTEGER, youtube_url TEXT, view_count INTEGER)""")
         db.execute("CREATE TABLE channel_activity (channel_id TEXT PRIMARY KEY, handle TEXT, last_run_at TEXT)")
         from datetime import datetime, timezone
         now = datetime(2026, 1, 31, tzinfo=timezone.utc)
@@ -69,6 +70,7 @@ def test_ingest_channel():
         # rerun inserts nothing new
         state["UCabc"] = "2026-01-22T00:00:00Z"
         assert m.ingest_channel(db, "k", {"channel_id": "UCabc", "handle": "h"}, state, now)[1] == 0
+        assert db.execute("select view_count from videos where video_id in ('v0','v1')").fetchall() == [(0,), (7,)]
         assert m.STATE_FILE.exists()
 
 

@@ -6,6 +6,11 @@ const KINDS = [
   ["short", "Shorts"],
   ["long", "Long"],
 ];
+const SORTS = [
+  ["recent", "Most recent"],
+  ["views", "Most viewed"],
+  ["oldest", "Oldest first"],
+];
 
 async function getJson(path, params = {}, signal) {
   const url = new URL(`${API}${path}`);
@@ -26,6 +31,7 @@ export default function App() {
   const [channels, setChannels] = useState([]);
   const [channelId, setChannelId] = useState("");
   const [kind, setKind] = useState("all");
+  const [sort, setSort] = useState("recent");
   const [videos, setVideos] = useState([]);
   const [cursor, setCursor] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -44,7 +50,7 @@ export default function App() {
     setError("");
     getJson(
       "/api/v1/library",
-      { channel_id: channelId, kind, limit: 30, after },
+      { channel_id: channelId, kind, sort, limit: 30, after },
       controller.current.signal,
     )
       .then((body) => {
@@ -67,7 +73,7 @@ export default function App() {
   useEffect(() => {
     load(0);
     return () => controller.current?.abort();
-  }, [channelId, kind]);
+  }, [channelId, kind, sort]);
 
   return (
     <main>
@@ -78,6 +84,11 @@ export default function App() {
             <option key={c.channel_id} value={c.channel_id}>
               {c.title} ({c.video_count})
             </option>
+          ))}
+        </select>
+        <select aria-label="Sort" value={sort} onChange={(e) => setSort(e.target.value)}>
+          {SORTS.map(([value, label]) => (
+            <option key={value} value={value}>{label}</option>
           ))}
         </select>
         <div className="kinds">

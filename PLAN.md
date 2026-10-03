@@ -56,7 +56,7 @@ Slices (each independently shippable and verifiable):
 ## Verification
 1. Run `auth_youtube.py`, confirm `token.json` created.
 2. Run ingest: log shows subscription count, per-channel found/saved; sqlite check `SELECT COUNT(*) FROM subscriptions; SELECT is_short,COUNT(*) FROM videos GROUP BY 1;`. Re-run -> no duplicates, quota use low.
-- [ ] 3. `curl /api/v1/videos?limit=5` returns only ids from subscribed channels, all `is_short=1`; `/api/v1/channels`, `/api/v1/library?channel_id=X&kind=long` return expected rows.
+3. `curl /api/v1/videos?limit=5` returns only ids from subscribed channels, all `is_short=1`; `/api/v1/channels`, `/api/v1/library?channel_id=X&kind=long` return expected rows.
 4. Open `ui/index.html` (unchanged) -> plays only subscribed Shorts. Open `web/` (`npm run dev`) -> All vs per-channel filter and kind toggle change results; Load more works.
 5. Unsubscribe a channel, re-run sync -> it disappears from both UIs.
 

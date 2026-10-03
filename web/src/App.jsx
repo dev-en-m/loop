@@ -48,7 +48,12 @@ export default function App() {
       controller.current.signal,
     )
       .then((body) => {
-        setVideos((prev) => (after ? [...prev, ...body.data] : body.data));
+        setVideos((prev) => {
+          if (!after) return body.data;
+          // offset paging: new ingests can shift rows and repeat ones already shown
+          const seen = new Set(prev.map((v) => v.video_id));
+          return [...prev, ...body.data.filter((v) => !seen.has(v.video_id))];
+        });
         setCursor(body.nextCursor);
         setLoading(false);
       })
@@ -67,7 +72,7 @@ export default function App() {
   return (
     <main>
       <header>
-        <select value={channelId} onChange={(e) => setChannelId(e.target.value)}>
+        <select aria-label="Channel" value={channelId} onChange={(e) => setChannelId(e.target.value)}>
           <option value="">All channels ({channels.length})</option>
           {channels.map((c) => (
             <option key={c.channel_id} value={c.channel_id}>
@@ -77,7 +82,12 @@ export default function App() {
         </select>
         <div className="kinds">
           {KINDS.map(([value, label]) => (
-            <button key={value} className={kind === value ? "on" : ""} onClick={() => setKind(value)}>
+            <button
+              key={value}
+              className={kind === value ? "on" : ""}
+              aria-pressed={kind === value}
+              onClick={() => setKind(value)}
+            >
               {label}
             </button>
           ))}

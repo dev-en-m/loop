@@ -70,7 +70,7 @@ def test_ingest_channel():
         # rerun inserts nothing new
         state["UCabc"] = "2026-01-22T00:00:00Z"
         assert m.ingest_channel(db, "k", {"channel_id": "UCabc", "handle": "h"}, state, now)[1] == 0
-        assert db.execute("select view_count from videos where video_id in ('v0','v1')").fetchall() == [(0,), (7,)]
+        assert db.execute("select view_count from videos where video_id in ('v0','v1')").fetchall() == [(None,), (7,)]
         assert m.STATE_FILE.exists()
 
 

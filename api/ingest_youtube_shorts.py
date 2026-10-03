@@ -175,8 +175,8 @@ def fetch_video_details(api_key, video_ids):
                 # Exact check = probe youtube.com/shorts/<id> for a redirect.
                 "is_short": int(duration_seconds is not None and duration_seconds <= 180),
                 "youtube_url": f"https://www.youtube.com/watch?v={video_id}",
-                # hidden counts are absent from the response
-                "view_count": int(item.get("statistics", {}).get("viewCount", 0)),
+                # hidden counts are absent from the response: keep NULL, sorts last
+                "view_count": int(v) if (v := item.get("statistics", {}).get("viewCount")) else None,
             })
     return videos
 
@@ -201,9 +201,10 @@ def ingest_channel(db, api_key, channel, state, run_started_at):
             :video_id, :channel_id, :title, :published_at, :duration_seconds, :is_short, :youtube_url,
             :view_count
         )
-        ON CONFLICT(video_id) DO UPDATE SET view_count = excluded.view_count
+        ON CONFLICT(video_id) DO UPDATE SET view_count = COALESCE(excluded.view_count, view_count)
     """, videos)
-    # ponytail: counts only refresh while a video is inside the rescan window (~1 day overlap)
+    # ponytail: counts freeze once a video leaves the ~1 day rescan window, so sort=views ranks by
+    # early views. Upgrade: separate pass refreshing statistics for recent videos (1 unit per 50 ids).
     inserted = db.execute("SELECT COUNT(*) FROM videos").fetchone()[0] - count_before
 
     state[channel_id] = run_started_at_iso

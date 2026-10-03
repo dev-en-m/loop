@@ -118,6 +118,7 @@ export default function App() {
             <h3>{v.title}</h3>
             <p>
               {v.channel_title} · {new Date(v.published_at).toLocaleDateString()}
+              {v.view_count != null && ` · ${v.view_count.toLocaleString()} views`}
               {v.is_short && " · Short"}
             </p>
           </a>

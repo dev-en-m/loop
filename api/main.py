@@ -41,11 +41,13 @@ def get_videos(
                 FROM videos v
                 JOIN subscriptions s ON s.channel_id = v.channel_id
                 WHERE v.is_short = 1
-                ORDER BY v.published_at DESC
+                ORDER BY v.published_at DESC, v.video_id
                 LIMIT ? OFFSET ?
             """, (limit + 1, after)).fetchall()
-    except sqlite3.OperationalError:  # tables not created yet, ingest has not run
-        rows = []
+    except sqlite3.OperationalError as err:
+        if "no such table" not in str(err):
+            raise
+        rows = []  # tables not created yet, ingest has not run
 
     ids = [row[0] for row in rows[:limit]]
     has_more = len(rows) > limit

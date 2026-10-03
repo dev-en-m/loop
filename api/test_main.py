@@ -24,11 +24,22 @@ def test_feed_only_subscribed_shorts():
             ("s2", "sub", "2026-01-02", 1),
             ("long", "sub", "2026-01-03", 0),      # not a short
             ("other", "nosub", "2026-01-04", 1),   # not subscribed
+            ("t2", "sub", "2026-01-02", 1),        # same published_at as s2: tiebreak by video_id
         ])
         db.commit()
-        assert main.get_videos()["data"] == ["s2", "s1"]
+        assert main.get_videos()["data"] == ["s2", "t2", "s1"]
         page = main.get_videos(limit=1)
         assert page["data"] == ["s2"] and page["hasMore"] and page["nextCursor"] == 1
+        assert main.get_videos(limit=1, after=1)["data"] == ["t2"]  # no repeat or skip across pages
+
+        # an old-schema db must fail loudly, not look like an empty feed
+        db.execute("ALTER TABLE videos RENAME COLUMN is_short TO is_short_old")
+        db.commit()
+        try:
+            main.get_videos()
+            assert False, "expected OperationalError"
+        except sqlite3.OperationalError:
+            pass
 
 
 if __name__ == "__main__":

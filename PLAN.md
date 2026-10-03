@@ -40,10 +40,10 @@ Slices (each independently shippable and verifiable):
 - [x] 1. `docs/plan-and-workflow`: `PLAN.md` + `CLAUDE.md`.
 - [x] 2. `feat/oauth-subscriptions`: `auth_youtube.py`, `subscriptions` table, subscription sync, requirements/.env/.gitignore. Verify: table filled with real subs.
 - [x] 3. `feat/uploads-ingest`: uploads-playlist ingest, 50-id batching, `is_short`, indexes/migration, per-channel error handling. Verify: videos rows + quota sane.
-- [ ] 4. `feat/subscribed-shorts-feed`: `/api/v1/videos` JOIN subscriptions + `is_short=1`. Verify: unchanged `ui/` shows only subscribed Shorts.
-- [ ] 5. `feat/library-api`: `/api/v1/channels`, `/api/v1/library`.
-- [ ] 6. `feat/web-list-ui`: `web/` React/Vite with channel + kind filters.
-- [ ] 7. `chore/docker-readme`: Dockerfile/requirements pins, daily schedule docs, root README.
+- [x] 4. `feat/subscribed-shorts-feed`: `/api/v1/videos` JOIN subscriptions + `is_short=1`. Verify: unchanged `ui/` shows only subscribed Shorts.
+- [x] 5. `feat/library-api`: `/api/v1/channels`, `/api/v1/library`.
+- [x] 6. `feat/web-list-ui`: `web/` React/Vite with channel + kind filters.
+- [x] 7. `chore/docker-readme`: Dockerfile/requirements pins, daily schedule docs, root README.
 
 `CLAUDE.md` content (workflow section):
 - Work in vertical slices; one slice = one branch (`feat/...`, `fix/...`, `docs/...`) from up-to-date `main`.

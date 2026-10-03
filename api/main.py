@@ -81,19 +81,23 @@ def get_channels():
 def get_library(
     channel_id: Optional[str] = None,
     kind: Literal["all", "short", "long"] = "all",
+    sort: Literal["recent", "oldest", "views"] = "recent",
     limit: Annotated[int, Query(ge=1, le=100)] = 30,
     after: Annotated[int, Query(ge=0)] = 0,
 ):
     rows = query("""
         SELECT v.video_id, v.channel_id, s.title AS channel_title, v.title,
-               v.published_at, v.duration_seconds, v.is_short, v.youtube_url AS url
+               v.published_at, v.duration_seconds, v.is_short, v.view_count, v.youtube_url AS url
         FROM videos v
         JOIN subscriptions s ON s.channel_id = v.channel_id
         WHERE (:channel_id IS NULL OR :channel_id = '' OR v.channel_id = :channel_id)
           AND (:kind = 'all' OR v.is_short = (:kind = 'short'))
-        ORDER BY v.published_at DESC, v.video_id
+        ORDER BY
+            CASE :sort WHEN 'views' THEN v.view_count END DESC,
+            CASE :sort WHEN 'oldest' THEN v.published_at END ASC,
+            v.published_at DESC, v.video_id
         LIMIT :limit OFFSET :after
-    """, {"channel_id": channel_id, "kind": kind, "limit": limit + 1, "after": after})
+    """, {"sort": sort, "channel_id": channel_id, "kind": kind, "limit": limit + 1, "after": after})
     videos = [
         {
             **dict(row),

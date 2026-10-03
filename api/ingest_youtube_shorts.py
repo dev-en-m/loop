@@ -150,7 +150,7 @@ def fetch_video_details(api_key, video_ids):
         response = requests.get(
             GOOGLE_YT_VIDEOS_URL,
             params={
-                "part": "snippet,contentDetails",
+                "part": "snippet,contentDetails,statistics",
                 "id": ",".join(video_ids[start:start + 50]),
                 "key": api_key,
             },
@@ -175,6 +175,8 @@ def fetch_video_details(api_key, video_ids):
                 # Exact check = probe youtube.com/shorts/<id> for a redirect.
                 "is_short": int(duration_seconds is not None and duration_seconds <= 180),
                 "youtube_url": f"https://www.youtube.com/watch?v={video_id}",
+                # hidden counts are absent from the response: keep NULL, sorts last
+                "view_count": int(v) if (v := item.get("statistics", {}).get("viewCount")) else None,
             })
     return videos
 
@@ -191,15 +193,19 @@ def ingest_channel(db, api_key, channel, state, run_started_at):
     run_started_at_iso = run_started_at.isoformat().replace("+00:00", "Z")
     ids = list_upload_ids(api_key, channel_id, published_after)
     videos = fetch_video_details(api_key, ids)
-    changes_before = db.total_changes
+    count_before = db.execute("SELECT COUNT(*) FROM videos").fetchone()[0]
     db.executemany("""
-        INSERT OR IGNORE INTO videos (
-            video_id, channel_id, title, published_at, duration_seconds, is_short, youtube_url
+        INSERT INTO videos (
+            video_id, channel_id, title, published_at, duration_seconds, is_short, youtube_url, view_count
         ) VALUES (
-            :video_id, :channel_id, :title, :published_at, :duration_seconds, :is_short, :youtube_url
+            :video_id, :channel_id, :title, :published_at, :duration_seconds, :is_short, :youtube_url,
+            :view_count
         )
+        ON CONFLICT(video_id) DO UPDATE SET view_count = COALESCE(excluded.view_count, view_count)
     """, videos)
-    inserted = db.total_changes - changes_before
+    # ponytail: counts freeze once a video leaves the ~1 day rescan window, so sort=views ranks by
+    # early views. Upgrade: separate pass refreshing statistics for recent videos (1 unit per 50 ids).
+    inserted = db.execute("SELECT COUNT(*) FROM videos").fetchone()[0] - count_before
 
     state[channel_id] = run_started_at_iso
     db.execute("""
@@ -240,6 +246,8 @@ def main():
         if "is_short" not in [r[1] for r in db.execute("PRAGMA table_info(videos)")]:
             # rows from the old Shorts-only ingest are all shorts
             db.execute("ALTER TABLE videos ADD COLUMN is_short INTEGER NOT NULL DEFAULT 1")
+        if "view_count" not in [r[1] for r in db.execute("PRAGMA table_info(videos)")]:
+            db.execute("ALTER TABLE videos ADD COLUMN view_count INTEGER")  # NULL until re-ingested
         db.execute("CREATE INDEX IF NOT EXISTS videos_published ON videos(published_at DESC)")
         db.execute(
             "CREATE INDEX IF NOT EXISTS videos_channel_published ON videos(channel_id, published_at DESC)"

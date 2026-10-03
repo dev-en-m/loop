@@ -1,4 +1,3 @@
-import csv
 import json
 import os
 import re
@@ -13,17 +12,15 @@ from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 
 BASE_DIR = Path(__file__).resolve().parent
-ROOT_DIR = BASE_DIR.parent
 DATA_DIR = Path(os.environ.get("DATA_DIR", BASE_DIR))
 
-CHANNELS_CSV = ROOT_DIR / "csv" / "channels_with_ids.csv"
 DB_PATH = DATA_DIR / "app.db"
 STATE_FILE = DATA_DIR / "last_run_by_channel.json"
 TOKEN_FILE = DATA_DIR / "token.json"
 
-GOOGLE_YT_SEARCH_URL = os.environ.get(
-    "GOOGLE_YT_SEARCH_URL",
-    "https://www.googleapis.com/youtube/v3/search",
+GOOGLE_YT_PLAYLIST_ITEMS_URL = os.environ.get(
+    "GOOGLE_YT_PLAYLIST_ITEMS_URL",
+    "https://www.googleapis.com/youtube/v3/playlistItems",
 )
 GOOGLE_YT_SUBS_URL = os.environ.get(
     "GOOGLE_YT_SUBS_URL",
@@ -84,9 +81,9 @@ def sync_subscriptions(db, synced_at):
     return len(subs)
 
 
-def load_channels():
-    with CHANNELS_CSV.open(newline="") as f:
-        return [row for row in csv.DictReader(f) if row.get("channel_id")]
+def load_channels(db):
+    rows = db.execute("SELECT channel_id, title FROM subscriptions").fetchall()
+    return [{"channel_id": channel_id, "handle": title} for channel_id, title in rows]
 
 
 def parse_duration_seconds(duration):
@@ -100,60 +97,62 @@ def parse_duration_seconds(duration):
     return hours * 3600 + minutes * 60 + seconds
 
 
-def search_video_ids(api_key, channel_id, published_after, published_before):
+def list_upload_ids(api_key, channel_id, published_after):
+    # uploads playlist id is the channel id with "UC" swapped for "UU"
     params = {
-        "part": "id",
-        "channelId": channel_id,
-        "type": "video",
-        "videoDuration": "short",
-        "order": "date",
+        "part": "contentDetails",
+        "playlistId": "UU" + channel_id[2:],
         "maxResults": 50,
-        "publishedAfter": published_after,
-        "publishedBefore": published_before,
         "key": api_key,
     }
-    response = requests.get(GOOGLE_YT_SEARCH_URL, params=params, timeout=30)
-    response.raise_for_status()
-    data = response.json()
-    return [
-        item["id"]["videoId"]
-        for item in data.get("items", [])
-        if item.get("id", {}).get("videoId")
-    ]
+    ids = []
+    while True:
+        response = requests.get(GOOGLE_YT_PLAYLIST_ITEMS_URL, params=params, timeout=30)
+        response.raise_for_status()
+        data = response.json()
+        for item in data.get("items", []):
+            details = item.get("contentDetails", {})
+            published_at = details.get("videoPublishedAt")
+            if not published_at:  # private or deleted
+                continue
+            if published_at < published_after:  # newest first, so we are done
+                return ids
+            ids.append(details["videoId"])
+        if not data.get("nextPageToken"):
+            return ids
+        params["pageToken"] = data["nextPageToken"]
 
 
 def fetch_video_details(api_key, video_ids):
-    if not video_ids:
-        return []
-
-    response = requests.get(
-        GOOGLE_YT_VIDEOS_URL,
-        params={
-            "part": "snippet,contentDetails",
-            "id": ",".join(video_ids),
-            "key": api_key,
-        },
-        timeout=30,
-    )
-    response.raise_for_status()
-
     videos = []
-    for item in response.json().get("items", []):
-        duration_seconds = parse_duration_seconds(
-            item.get("contentDetails", {}).get("duration", "")
+    for start in range(0, len(video_ids), 50):  # videos.list caps at 50 ids
+        response = requests.get(
+            GOOGLE_YT_VIDEOS_URL,
+            params={
+                "part": "snippet,contentDetails",
+                "id": ",".join(video_ids[start:start + 50]),
+                "key": api_key,
+            },
+            timeout=30,
         )
-        if duration_seconds > 60:
-            continue
-        snippet = item.get("snippet", {})
-        video_id = item["id"]
-        videos.append({
-            "video_id": video_id,
-            "channel_id": snippet.get("channelId", ""),
-            "title": snippet.get("title", ""),
-            "published_at": snippet.get("publishedAt", ""),
-            "duration_seconds": duration_seconds,
-            "youtube_url": f"https://www.youtube.com/watch?v={video_id}",
-        })
+        response.raise_for_status()
+        for item in response.json().get("items", []):
+            duration_seconds = parse_duration_seconds(
+                item.get("contentDetails", {}).get("duration", "")
+            )
+            snippet = item.get("snippet", {})
+            video_id = item["id"]
+            videos.append({
+                "video_id": video_id,
+                "channel_id": snippet.get("channelId", ""),
+                "title": snippet.get("title", ""),
+                "published_at": snippet.get("publishedAt", ""),
+                "duration_seconds": duration_seconds,
+                # ponytail: duration heuristic, Shorts can be up to 3 min but so can normal videos.
+                # Exact check = probe youtube.com/shorts/<id> for a redirect.
+                "is_short": int(duration_seconds <= 180),
+                "youtube_url": f"https://www.youtube.com/watch?v={video_id}",
+            })
     return videos
 
 
@@ -166,13 +165,13 @@ def ingest_channel(db, api_key, channel, state, run_started_at):
         ).isoformat().replace("+00:00", "Z")
 
     run_started_at_iso = run_started_at.isoformat().replace("+00:00", "Z")
-    ids = search_video_ids(api_key, channel_id, published_after, run_started_at_iso)
+    ids = list_upload_ids(api_key, channel_id, published_after)
     videos = fetch_video_details(api_key, ids)
     db.executemany("""
         INSERT OR IGNORE INTO videos (
-            video_id, channel_id, title, published_at, duration_seconds, youtube_url
+            video_id, channel_id, title, published_at, duration_seconds, is_short, youtube_url
         ) VALUES (
-            :video_id, :channel_id, :title, :published_at, :duration_seconds, :youtube_url
+            :video_id, :channel_id, :title, :published_at, :duration_seconds, :is_short, :youtube_url
         )
     """, videos)
 
@@ -185,8 +184,10 @@ def ingest_channel(db, api_key, channel, state, run_started_at):
             last_run_at = excluded.last_run_at
     """, (channel_id, channel.get("handle"), state[channel_id]))
     db.commit()
+    # saved after the commit so a crash re-fetches at worst (INSERT OR IGNORE)
+    STATE_FILE.write_text(json.dumps(state, indent=2, sort_keys=True) + "\n")
 
-    return len(ids), len(videos)
+    return len(ids), sum(v["is_short"] for v in videos)
 
 
 def main():
@@ -196,7 +197,6 @@ def main():
         raise SystemExit("GOOGLE_API_KEY is required")
 
     DATA_DIR.mkdir(parents=True, exist_ok=True)
-    channels = load_channels()
     state = json.loads(STATE_FILE.read_text()) if STATE_FILE.exists() else {}
     run_started_at = datetime.now(timezone.utc).replace(microsecond=0)
 
@@ -211,6 +211,13 @@ def main():
                 youtube_url TEXT NOT NULL
             )
         """)
+        if "is_short" not in [r[1] for r in db.execute("PRAGMA table_info(videos)")]:
+            # rows from the old Shorts-only ingest are all shorts
+            db.execute("ALTER TABLE videos ADD COLUMN is_short INTEGER NOT NULL DEFAULT 1")
+        db.execute("CREATE INDEX IF NOT EXISTS videos_published ON videos(published_at DESC)")
+        db.execute(
+            "CREATE INDEX IF NOT EXISTS videos_channel_published ON videos(channel_id, published_at DESC)"
+        )
         db.execute("""
             CREATE TABLE IF NOT EXISTS channel_activity (
                 channel_id TEXT PRIMARY KEY,
@@ -230,14 +237,14 @@ def main():
             print(f"subscriptions={sync_subscriptions(db, run_started_at.isoformat())}")
         except (OSError, ValueError, RefreshError, requests.RequestException) as err:
             print(f"subscriptions sync failed: {err}", flush=True)
+        channels = load_channels(db)
         for channel in channels:
             try:
                 found, saved = ingest_channel(db, api_key, channel, state, run_started_at)
                 print(f"{channel['handle']}: found={found} shorts={saved}")
-            except requests.HTTPError as err:
+            except requests.RequestException as err:
                 print(f"{channel['handle']}: failed {err}", flush=True)
 
-    STATE_FILE.write_text(json.dumps(state, indent=2, sort_keys=True) + "\n")
     print(f"done channels={len(channels)}")
 
 

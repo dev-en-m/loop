@@ -5,7 +5,7 @@ The image runs the API and the ingest script. The one-time OAuth consent runs on
 Build from the repository root:
 
 ```sh
-docker build -f docker/Dockerfile -t yt-tech-shorts-api .
+docker build -f docker/Dockerfile -t loop-api .
 ```
 
 Data lives in a host directory so `token.json` (from the consent step) and `app.db` are shared with the container:
@@ -20,19 +20,19 @@ Set `DATA_DIR` in the shell, not in `api/.env`: `--env-file api/.env` would over
 Run ingestion (syncs subscriptions, then fetches new uploads). This creates/updates `data/app.db`:
 
 ```sh
-docker run --rm --env-file api/.env -v "$PWD/data:/app/data" yt-tech-shorts-api python api/ingest_youtube_shorts.py
+docker run --rm --env-file api/.env -v "$PWD/data:/app/data" loop-api python api/ingest_youtube_shorts.py
 ```
 
 Run the API against the same directory:
 
 ```sh
-docker run --rm -p 8000:8000 -v "$PWD/data:/app/data" yt-tech-shorts-api
+docker run --rm -p 8000:8000 -v "$PWD/data:/app/data" loop-api
 ```
 
 Run ingestion daily, for example with cron (`crontab -e`):
 
 ```cron
-0 6 * * * cd /path/to/yt-tech-shorts && docker run --rm --env-file api/.env -v "$PWD/data:/app/data" yt-tech-shorts-api python api/ingest_youtube_shorts.py >> data/ingest.log 2>&1
+0 6 * * * cd /path/to/loop && docker run --rm --env-file api/.env -v "$PWD/data:/app/data" loop-api python api/ingest_youtube_shorts.py >> data/ingest.log 2>&1
 ```
 
 If the OAuth consent screen is in "Testing" status the refresh token expires after 7 days and ingest logs `subscriptions sync failed`. Publish the app or re-run `auth_youtube.py`.

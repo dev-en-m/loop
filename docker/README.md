@@ -35,7 +35,7 @@ Run ingestion daily, for example with cron (`crontab -e`):
 0 6 * * * cd /path/to/loop && docker run --rm --env-file api/.env -v "$PWD/data:/app/data" loop-api python api/ingest_youtube_shorts.py >> data/ingest.log 2>&1
 ```
 
-If the OAuth consent screen is in "Testing" status the refresh token expires after 7 days and ingest logs `subscriptions sync failed`. Publish the app or re-run `auth_youtube.py`.
+If the OAuth consent screen is in "Testing" status the refresh token expires after 7 days and ingest logs `subscriptions sync failed`. Fix once: in Google Cloud console set the consent screen to **In production**, re-run `auth_youtube.py`, and `scp` the new `token.json` to the server. A published app keeps the refresh token.
 
 ## Deploy
 
@@ -56,7 +56,7 @@ Hosted with [deployment-kit](https://github.com/dev-en-m/deployment-kit): push t
    ```sh
    cd /srv/apps/loop && docker compose run --rm app python api/ingest_youtube_shorts.py
    # crontab -e
-   0 6 * * * cd /srv/apps/loop && docker compose run --rm app python api/ingest_youtube_shorts.py > data/ingest.log 2>&1   # keeps only the last run, no log growth
+   0 6 * * * cd /srv/apps/loop && docker compose run --rm -T app python api/ingest_youtube_shorts.py > data/ingest.log 2>&1   # keeps only the last run, no log growth
    ```
 
 Check: `curl https://<subdomain>/health` returns OK (works before the first ingest); `/api/v1/videos` returns JSON after it. Point the kit's uptime monitor (section 5) at `/health`.

@@ -1,4 +1,5 @@
 """Run: python api/test_main.py (needs docker/requirements.txt installed)."""
+import asyncio
 import sqlite3
 import tempfile
 from pathlib import Path
@@ -82,7 +83,34 @@ def test_channels_and_library():
         assert v["thumbnail"].endswith("/a2/hqdefault.jpg") and v["url"].endswith("v=a2")
 
 
+def test_origin_lock():
+    def status(origin):
+        headers = [(b"origin", origin.encode())] if origin else []
+        scope = {"type": "http", "method": "GET", "path": "/health", "query_string": b"",
+                 "headers": headers, "http_version": "1.1", "scheme": "http", "server": ("t", 80)}
+        out = []
+
+        async def send(msg):
+            out.append(msg)
+
+        async def receive():
+            return {"type": "http.request", "body": b"", "more_body": False}
+
+        asyncio.run(main.app(scope, receive, send))
+        return out[0]["status"]
+
+    main.ALLOWED_ORIGINS[:] = ["https://loop.devendram.com"]
+    try:
+        assert status("https://loop.devendram.com") == 200
+        assert status("https://evil.example") == 403
+        assert status(None) == 200  # curl, uptime checks
+    finally:
+        main.ALLOWED_ORIGINS.clear()
+    assert status("https://evil.example") == 200  # unset = open (local dev)
+
+
 if __name__ == "__main__":
     test_feed_only_subscribed_shorts()
     test_channels_and_library()
+    test_origin_lock()
     print("ok")

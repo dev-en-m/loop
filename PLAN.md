@@ -30,7 +30,7 @@ Decisions (from user): OAuth subscriptions; single user; one-time CLI consent; a
 ## Infra
 - `docker/requirements.txt`: add `google-auth`, `google-auth-oauthlib`, pin versions.
 - `docker/Dockerfile`: also copy `api/auth_youtube.py`; note token.json lives in the data volume.
-- `docker/README.md` + root `README.md` (currently empty): setup order = create OAuth client -> run `auth_youtube.py` -> run ingest (daily cron / scheduler) -> run API -> serve `ui/` and `web/`.
+- `docker/README.md` + root `README.md`: setup order = create OAuth client -> run `auth_youtube.py` -> run ingest (daily cron / scheduler) -> run API -> serve `ui/` and `web/`.
 - `.gitignore`: add `token.json`, `client_secret*.json`, `web/node_modules`, `web/dist`.
 
 ## Delivery: vertical slices, one PR each

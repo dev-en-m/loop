@@ -5,7 +5,7 @@ The image runs the API and the ingest script. The one-time OAuth consent runs on
 Build from the repository root:
 
 ```sh
-docker build -f docker/Dockerfile -t yt-tech-shorts-api .
+docker build -f docker/Dockerfile -t loop-api .
 ```
 
 Data lives in a host directory so `token.json` (from the consent step) and `app.db` are shared with the container:
@@ -20,19 +20,19 @@ Set `DATA_DIR` in the shell, not in `api/.env`: `--env-file api/.env` would over
 Run ingestion (syncs subscriptions, then fetches new uploads). This creates/updates `data/app.db`:
 
 ```sh
-docker run --rm --env-file api/.env -v "$PWD/data:/app/data" yt-tech-shorts-api python api/ingest_youtube_shorts.py
+docker run --rm --env-file api/.env -v "$PWD/data:/app/data" loop-api python api/ingest_youtube_shorts.py
 ```
 
 Run the API against the same directory:
 
 ```sh
-docker run --rm -p 8000:8000 -v "$PWD/data:/app/data" yt-tech-shorts-api
+docker run --rm -p 8000:8000 -v "$PWD/data:/app/data" loop-api
 ```
 
 Run ingestion daily, for example with cron (`crontab -e`):
 
 ```cron
-0 6 * * * cd /path/to/yt-tech-shorts && docker run --rm --env-file api/.env -v "$PWD/data:/app/data" yt-tech-shorts-api python api/ingest_youtube_shorts.py >> data/ingest.log 2>&1
+0 6 * * * cd /path/to/loop && docker run --rm --env-file api/.env -v "$PWD/data:/app/data" loop-api python api/ingest_youtube_shorts.py >> data/ingest.log 2>&1
 ```
 
 If the OAuth consent screen is in "Testing" status the refresh token expires after 7 days and ingest logs `subscriptions sync failed`. Publish the app or re-run `auth_youtube.py`.
@@ -46,7 +46,8 @@ Hosted with [deployment-kit](https://github.com/dev-en-m/deployment-kit): push t
    ```sh
    mkdir -p /srv/apps/loop/data && cd /srv/apps/loop
    # paste docker/docker-compose.server.yml as docker-compose.yml
-   # create .env: IMAGE_TAG=latest plus GOOGLE_API_KEY etc. from api/.env.example
+   # create .env: IMAGE_TAG=latest plus GOOGLE_API_KEY etc. from api/.env.example,
+   # and ALLOWED_ORIGINS=https://loop.devendram.com (comma list; add the ui/ host if it is on another origin)
    ```
 3. Copy the OAuth token (made locally by `api/auth_youtube.py`): `scp data/token.json demo:/srv/apps/loop/data/`. It already holds the client id/secret, so `client_secret.json` is not needed on the server.
 4. As `ubuntu`: `sudo add-site <subdomain> 3001 <email>` (3001 = host port in the compose file, unique per app). Record `loop`, the port and the domain in the kit's port register (README 2.5); if 3001 is taken, change it there and in the compose file.
@@ -59,5 +60,7 @@ Hosted with [deployment-kit](https://github.com/dev-en-m/deployment-kit): push t
    ```
 
 Check: `curl https://<subdomain>/health` returns OK (works before the first ingest); `/api/v1/videos` returns JSON after it. Point the kit's uptime monitor (section 5) at `/health`.
+
+`ALLOWED_ORIGINS` makes the API reject browser requests from other sites (403). It does not stop curl or scripts, which can fake `Origin`.
 
 Backups: the kit's backup cron only dumps Postgres. `app.db` can be rebuilt by re-ingesting. `token.json` cannot (needs the browser consent again), so keep the local `data/token.json` or take a Lightsail snapshot. The API does not serve `ui/` or `web/`; host those separately.

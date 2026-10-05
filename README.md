@@ -1,4 +1,4 @@
-# yt-tech-shorts
+# loop
 
 Your YouTube subscriptions as two feeds:
 
@@ -15,9 +15,9 @@ Your YouTube subscriptions as two feeds:
 5. **Ingest:** `venv/bin/python api/ingest_youtube_shorts.py`. First run backfills 10 days per channel. Run it daily (cron example in `docker/README.md`).
 6. **API:** `venv/bin/uvicorn api.main:app --port 8000`
 7. **Shorts UI:** serve `ui/` statically (for example `python3 -m http.server -d ui 5500`). It reads the API URL from the `api-endpoint` meta tag in `ui/index.html`.
-8. **List UI:** `cd web && cp .env.example .env && npm install && npm run dev`. `VITE_API_BASE` points at the API.
+8. **List UI:** `cd web && cp .env.example .env && npm install && npm run dev`. `VITE_API_BASE` points at the API. Local: the `.env.example` default (`http://127.0.0.1:8000`). Netlify (`netlify.toml` builds `web/`): set `VITE_API_BASE` to the public API URL in Site settings → Environment variables. The same build also serves `ui/` at `/shorts/`, with its API URL swapped to `VITE_API_BASE`. It is baked in at build time, so it is config, not a secret.
 
-Docker for the API and ingest: `docker/README.md`.
+Docker for the API and ingest, and deploy (push to `main` redeploys via GitHub Actions): `docker/README.md`.
 
 ## API
 
@@ -25,7 +25,7 @@ Docker for the API and ingest: `docker/README.md`.
 | --- | --- |
 | `GET /api/v1/videos?limit&after` | Shorts video ids from subscribed channels, newest first |
 | `GET /api/v1/channels` | Subscribed channels with video counts |
-| `GET /api/v1/library?channel_id&kind=all\|short\|long&limit&after` | Video objects, subscribed channels only |
+| `GET /api/v1/library?channel_id&kind=all\|short\|long&sort=recent\|oldest\|views&limit&after` | Video objects, subscribed channels only |
 | `GET /health` | `{"ok": true}` |
 
 ## Blocked channels

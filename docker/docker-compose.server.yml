@@ -1,0 +1,16 @@
+# Copy to the server as /srv/apps/<repo-name>/docker-compose.yml (see docker/README.md, "Deploy").
+# Next to it create .env (IMAGE_TAG=latest plus the vars from api/.env.example)
+# and data/ holding token.json. Do not set DATA_DIR in .env.
+# GitHub Actions updates IMAGE_TAG on every deploy.
+
+services:
+  app:
+    image: ghcr.io/dev-en-m/loop:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      # 127.0.0.1 only: reachable through nginx, never directly from the internet.
+      - "127.0.0.1:3001:8000"
+    volumes:
+      - ./data:/app/data   # app.db + token.json
+    mem_limit: 128m

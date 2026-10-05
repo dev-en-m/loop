@@ -36,3 +36,26 @@ Run ingestion daily, for example with cron (`crontab -e`):
 ```
 
 If the OAuth consent screen is in "Testing" status the refresh token expires after 7 days and ingest logs `subscriptions sync failed`. Publish the app or re-run `auth_youtube.py`.
+
+## Deploy
+
+Hosted with [deployment-kit](https://github.com/dev-en-m/deployment-kit): push to `main` builds the image (`.github/workflows/deploy.yml`), pushes it to GHCR and redeploys over SSH. Do the kit's one-time server setup (its section 1) first. Then, for this app (kit section 2; no Postgres/Redis, the API uses SQLite):
+
+1. DNS: A record for the subdomain pointing at the server IP.
+2. On the server, the folder name must equal the GitHub repo name (`loop`):
+   ```sh
+   mkdir -p /srv/apps/loop/data && cd /srv/apps/loop
+   # paste docker/docker-compose.server.yml as docker-compose.yml
+   # create .env: IMAGE_TAG=latest plus GOOGLE_API_KEY etc. from api/.env.example
+   ```
+3. Copy the OAuth token (made locally by `api/auth_youtube.py`): `scp data/token.json demo:/srv/apps/loop/data/`. It already holds the client id/secret, so `client_secret.json` is not needed on the server.
+4. As `ubuntu`: `sudo add-site <subdomain> 3001 <email>` (3001 = host port in the compose file, unique per app).
+5. Repo secrets `SERVER_HOST` and `SERVER_SSH_KEY`, then push to `main`.
+6. First ingest, then daily cron as `deploy`:
+   ```sh
+   cd /srv/apps/loop && docker compose run --rm app python api/ingest_youtube_shorts.py
+   # crontab -e
+   0 6 * * * cd /srv/apps/loop && docker compose run --rm app python api/ingest_youtube_shorts.py >> data/ingest.log 2>&1
+   ```
+
+Check: `curl https://<subdomain>/api/v1/videos` returns JSON. The API does not serve `ui/` or `web/`; host those separately.

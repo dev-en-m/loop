@@ -15,7 +15,7 @@ Your YouTube subscriptions as two feeds:
 5. **Ingest:** `venv/bin/python api/ingest_youtube_shorts.py`. First run backfills 10 days per channel. Run it daily (cron example in `docker/README.md`).
 6. **API:** `venv/bin/uvicorn api.main:app --port 8000`
 7. **Shorts UI:** serve `ui/` statically (for example `python3 -m http.server -d ui 5500`). It reads the API URL from the `api-endpoint` meta tag in `ui/index.html`.
-8. **List UI:** `cd web && cp .env.example .env && npm install && npm run dev`. `VITE_API_BASE` points at the API.
+8. **List UI:** `cd web && cp .env.example .env && npm install && npm run dev`. `VITE_API_BASE` points at the API. Local: the `.env.example` default (`http://127.0.0.1:8000`). Netlify (`netlify.toml` builds `web/`): set `VITE_API_BASE` to the public API URL in Site settings → Environment variables. It is baked into the bundle at build time, so it is config, not a secret.
 
 Docker for the API and ingest, and deploy (push to `main` redeploys via GitHub Actions): `docker/README.md`.
 

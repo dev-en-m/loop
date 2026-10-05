@@ -4,21 +4,33 @@ from pathlib import Path
 from typing import Literal, Optional
 from typing_extensions import Annotated
 
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = Path(os.environ.get("DATA_DIR", BASE_DIR))
 DB_PATH = DATA_DIR / "app.db"
+# Comma list of allowed browser origins. Empty = open (local dev).
+ALLOWED_ORIGINS = [o for o in os.environ.get("ALLOWED_ORIGINS", "").split(",") if o]
 
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS or ["*"],
     allow_methods=["GET"],
     allow_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def origin_lock(request: Request, call_next):
+    # ponytail: Origin is spoofable by non-browser clients; add a proxy secret header if abuse appears.
+    origin = request.headers.get("origin")
+    if ALLOWED_ORIGINS and origin and origin not in ALLOWED_ORIGINS:
+        return JSONResponse({"detail": "forbidden origin"}, status_code=403)
+    return await call_next(request)
 
 
 @app.get("/health")

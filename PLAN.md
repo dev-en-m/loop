@@ -46,7 +46,7 @@ Slices (each independently shippable and verifiable):
 - [x] 7. `chore/docker-readme`: Dockerfile/requirements pins, daily schedule docs, root README.
 - [x] 8. `feat/blocked-channels`: `api/blocked_channels.txt`; sync skips blocked ids and purges their stored rows.
 - [x] 9. `feat/library-sort`: `view_count` ingest, `/api/v1/library?sort=recent|oldest|views`, sort select in `web/`.
-- [ ] 10. `chore/deploy-kit`: GitHub Actions deploy workflow + server compose for deployment-kit, deploy docs.
+- [x] 10. `chore/deploy-kit`: GitHub Actions deploy workflow + server compose for deployment-kit, deploy docs.
 
 `CLAUDE.md` content (workflow section):
 - Work in vertical slices; one slice = one branch (`feat/...`, `fix/...`, `docs/...`) from up-to-date `main`.

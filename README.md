@@ -1,4 +1,4 @@
-# yt-tech-shorts
+# loop
 
 Your YouTube subscriptions as two feeds:
 
@@ -17,7 +17,7 @@ Your YouTube subscriptions as two feeds:
 7. **Shorts UI:** serve `ui/` statically (for example `python3 -m http.server -d ui 5500`). It reads the API URL from the `api-endpoint` meta tag in `ui/index.html`.
 8. **List UI:** `cd web && cp .env.example .env && npm install && npm run dev`. `VITE_API_BASE` points at the API.
 
-Docker for the API and ingest: `docker/README.md`.
+Docker for the API and ingest, and deploy (push to `main` redeploys via GitHub Actions): `docker/README.md`.
 
 ## API
 
@@ -25,7 +25,7 @@ Docker for the API and ingest: `docker/README.md`.
 | --- | --- |
 | `GET /api/v1/videos?limit&after` | Shorts video ids from subscribed channels, newest first |
 | `GET /api/v1/channels` | Subscribed channels with video counts |
-| `GET /api/v1/library?channel_id&kind=all\|short\|long&limit&after` | Video objects, subscribed channels only |
+| `GET /api/v1/library?channel_id&kind=all\|short\|long&sort=recent\|oldest\|views&limit&after` | Video objects, subscribed channels only |
 | `GET /health` | `{"ok": true}` |
 
 ## Blocked channels

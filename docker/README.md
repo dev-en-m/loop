@@ -50,7 +50,7 @@ Hosted with [deployment-kit](https://github.com/dev-en-m/deployment-kit): push t
    ```
 3. Copy the OAuth token (made locally by `api/auth_youtube.py`): `scp data/token.json demo:/srv/apps/loop/data/`. It already holds the client id/secret, so `client_secret.json` is not needed on the server.
 4. As `ubuntu`: `sudo add-site <subdomain> 3001 <email>` (3001 = host port in the compose file, unique per app). Record `loop`, the port and the domain in the kit's port register (README 2.5); if 3001 is taken, change it there and in the compose file.
-5. Repo secrets `SERVER_HOST` and `SERVER_SSH_KEY`, then push to `main`.
+5. Repo secrets `SERVER_HOST` and `SERVER_SSH_KEY`, then merge the release PR into `main`.
 6. First ingest, then daily cron as `deploy`:
    ```sh
    cd /srv/apps/loop && docker compose run --rm app python api/ingest_youtube_shorts.py

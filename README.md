@@ -32,6 +32,11 @@ Docker for the API and ingest: `docker/README.md`.
 
 Add a channel id to `api/blocked_channels.txt` to hide it and stop storing its videos. The next ingest run removes its existing rows.
 
+## Branches and deploy
+
+- Work on `feat/`, `fix/`, `docs/` or `chore/` branches cut from `develop`; open PRs into `develop`.
+- `main` deploys on every push (`docker/README.md`, "Deploy"). To release, open a PR `develop` -> `main` and merge it once the server is ready.
+
 ## Tests
 
 `venv/bin/python api/test_main.py` and `venv/bin/python api/test_ingest.py`

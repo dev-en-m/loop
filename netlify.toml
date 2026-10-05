@@ -1,4 +1,5 @@
+# web/ is served at /, ui/ at /shorts/ (its hardcoded API URL is swapped at build time; ui/ stays untouched).
 [build]
   base = "web"
-  command = "npm run build"
+  command = "npm run build && mkdir -p dist/shorts && cp ../ui/* dist/shorts/ && sed -i.bak \"s|http://127.0.0.1:8000|$VITE_API_BASE|\" dist/shorts/index.html && rm dist/shorts/index.html.bak"
   publish = "dist"

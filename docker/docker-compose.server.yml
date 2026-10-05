@@ -14,3 +14,4 @@ services:
     volumes:
       - ./data:/app/data   # app.db + token.json
     mem_limit: 128m
+    # no shared network: SQLite, no Postgres/Redis

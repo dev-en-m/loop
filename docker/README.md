@@ -63,4 +63,4 @@ Check: `curl https://<subdomain>/health` returns OK (works before the first inge
 
 `ALLOWED_ORIGINS` makes the API reject browser requests from other sites (403). It does not stop curl or scripts, which can fake `Origin`.
 
-Backups: the kit's backup cron only dumps Postgres. `app.db` can be rebuilt by re-ingesting. `token.json` cannot (needs the browser consent again), so keep the local `data/token.json` or take a Lightsail snapshot. The API does not serve `ui/` or `web/`; host those separately.
+Backups: the kit's backup cron only dumps Postgres. `app.db` videos can be rebuilt by re-ingesting, but its `views` table (Shorts watch history that drives feed ranking) cannot, and neither can `token.json` (needs the browser consent again), so keep the local `data/token.json` or take a Lightsail snapshot. The API does not serve `ui/` or `web/`; host those separately.

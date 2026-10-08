@@ -5,8 +5,16 @@ const API_ENDPOINT = (() => {
   return el?.content || `${window.location.origin}/api/v1/videos`;
 })();
 
+const EVENTS_ENDPOINT = new URL("events", API_ENDPOINT).toString();
+// Page-load time: the API reshuffles per session and freezes watch history at this point,
+// so paging stays consistent while new watches only reorder the next visit.
+const SESSION = String(Date.now());
+
 const PAGE_SIZE = 30;
 const LOAD_AHEAD = 5;
+// Players kept either side of the active short. iOS WebKit runs out of memory
+// with dozens of YouTube iframes and renders them all black.
+const KEEP_AROUND = 2;
 
 let players = new Map();
 let videoIds = [];
@@ -26,6 +34,7 @@ async function fetchVideos() {
   isFetching = true;
   const url = new URL(API_ENDPOINT);
   url.searchParams.set("limit", String(PAGE_SIZE));
+  url.searchParams.set("session", SESSION);
   if (nextCursor) url.searchParams.set("after", nextCursor);
 
   try {
@@ -58,12 +67,24 @@ function appendSlides(ids, startIndex) {
     track.appendChild(slide);
 
     if (observer) observer.observe(slide);
-    if (ytReady) createPlayer(index, videoId);
   });
+
+  syncPlayers(Math.max(activeIndex, 0));
 }
 
-function createMissingPlayers() {
-  videoIds.forEach((videoId, index) => createPlayer(index, videoId));
+function syncPlayers(index) {
+  for (const [playerIndex, player] of players) {
+    if (Math.abs(playerIndex - index) <= KEEP_AROUND) continue;
+    try { player.destroy(); } catch (_) {}
+    players.delete(playerIndex);
+    const mount = document.createElement("div");
+    mount.id = `yt-${playerIndex}`;
+    document.querySelector(`.slide[data-index="${playerIndex}"]`)?.replaceChildren(mount);
+  }
+
+  if (!ytReady) return;
+  const last = Math.min(videoIds.length - 1, index + KEEP_AROUND);
+  for (let i = Math.max(0, index - KEEP_AROUND); i <= last; i++) createPlayer(i, videoIds[i]);
 }
 
 function createPlayer(index, videoId) {
@@ -96,8 +117,27 @@ function createPlayer(index, videoId) {
   }));
 }
 
+function reportWatch(index) {
+  const videoId = videoIds[index];
+  if (!videoId) return;
+
+  let ratio = 0; // player not ready yet = skipped before it loaded
+  try {
+    const player = players.get(index);
+    const duration = player.getDuration();
+    if (duration > 0) ratio = Math.min(1, player.getCurrentTime() / duration);
+  } catch (_) {}
+
+  const url = new URL(EVENTS_ENDPOINT);
+  url.searchParams.set("video_id", videoId);
+  url.searchParams.set("watch_ratio", ratio.toFixed(3));
+  fetch(url.toString(), { method: "POST", keepalive: true }).catch(() => {});
+}
+
 function playOnly(index) {
+  if (index !== activeIndex && activeIndex >= 0) reportWatch(activeIndex);
   activeIndex = index;
+  syncPlayers(index);
 
   for (const [playerIndex, player] of players) {
     try {
@@ -111,6 +151,21 @@ function playOnly(index) {
   }
 
   if (videoIds.length - index <= LOAD_AHEAD) fetchVideos();
+  setTimeout(() => playMutedIfBlocked(index), 1500);
+}
+
+// iOS refuses unmuted play that did not start inside a tap, which leaves the
+// short paused. Fall back to muted play; the next tap tries sound again.
+function playMutedIfBlocked(index) {
+  const player = players.get(index);
+  if (index !== activeIndex || !player?.getPlayerState) return;
+
+  const { UNSTARTED, PAUSED, CUED } = YT.PlayerState; // eslint-disable-line no-undef
+  if (![UNSTARTED, PAUSED, CUED].includes(player.getPlayerState())) return;
+
+  audioUnlocked = false; // stop unmuting on every swipe until the next tap
+  player.mute();
+  player.playVideo();
 }
 
 async function showNext() {
@@ -130,6 +185,7 @@ function unlockAudio() {
     player?.unMute();
     player?.playVideo();
   } catch (_) {}
+  setTimeout(() => playMutedIfBlocked(activeIndex), 1500);
 }
 
 function observeSlides() {
@@ -147,11 +203,13 @@ function observeSlides() {
 
 window.onYouTubeIframeAPIReady = () => {
   ytReady = true;
-  createMissingPlayers();
+  syncPlayers(Math.max(activeIndex, 0));
 };
 
-["pointerdown", "touchstart", "wheel", "keydown"].forEach((eventName) => {
-  window.addEventListener(eventName, unlockAudio, { once: true, passive: true });
+// click, not touchstart/pointerdown: iOS only counts a finished tap as a user gesture.
+// Not once: if iOS still blocks sound, playMutedIfBlocked mutes and the next tap retries.
+["click", "wheel", "keydown"].forEach((eventName) => {
+  window.addEventListener(eventName, unlockAudio, { passive: true });
 });
 
 observeSlides();

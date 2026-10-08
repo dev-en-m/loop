@@ -1,0 +1,288 @@
+{
+ "channels": [
+  {
+   "channel_id": "UCUyeluBRhGPCW4rPe_UvBZQ",
+   "title": "The PrimeTime",
+   "thumbnail": "https://yt3.ggpht.com/Eu_xR4JfLlrruwj1lrmfDiOpe8GARBs8M0hgQ6NsGhQ0qC8S-po9HEHw1W21sPN2BHO6EHXrSwM=s88-c-k-c0x00ffffff-no-rj",
+   "video_count": 2
+  },
+  {
+   "channel_id": "UCBJycsmduvYEL83R_U4JriQ",
+   "title": "Marques Brownlee",
+   "thumbnail": "https://yt3.ggpht.com/qu4TmIaYUlS41-dJ9gZ7DUR3nilvmB5_11i6OKSdvNnBNiyOusZP1bMN6ICnuxtjFBb6ioKgRQ=s88-c-k-c0x00ffffff-no-rj",
+   "video_count": 2
+  },
+  {
+   "channel_id": "UC_ML5xP23TOWKUcc-oAE_Eg",
+   "title": "Hussein Nasser",
+   "thumbnail": "https://yt3.ggpht.com/wdZxAigelIgebOT-NlWwVnvOijYuHttaa5jSpCuxlYajSEbfp75dVPSItmer-6jCrKACKChheAE=s88-c-k-c0x00ffffff-no-rj",
+   "video_count": 0
+  },
+  {
+   "channel_id": "UCyU5wkjgQYGRB0hIHMwm2Sg",
+   "title": "Syntax",
+   "thumbnail": "https://yt3.ggpht.com/gvvHQOWCRiNehiIKqDNS59DapvDsXsZugPnNqWumcp9OYCZPdmPTQw0AGaFEOb0uUKEg7VNpkA=s88-c-k-c0x00ffffff-no-rj",
+   "video_count": 2
+  },
+  {
+   "channel_id": "UCswG6FSbgZjbWtdf_hMLaow",
+   "title": "Matt Pocock",
+   "thumbnail": "https://yt3.ggpht.com/pSHatpqJ1olaZiyikhjdx3nbSJNdo71kzFYyyBpNhFAeK6v-zmfJPIp7HMtkWQ4bt0DRkU8X_-8=s88-c-k-c0x00ffffff-no-rj",
+   "video_count": 1
+  },
+  {
+   "channel_id": "UCLKPca3kwwd-B59HNr-_lvA",
+   "title": "AI Engineer",
+   "thumbnail": "https://yt3.ggpht.com/ajVemEB89DAOemsbfuMY6ZOWXJAACx3cbty9z21jeqRKODaVkDBSRun1b1xfQJljEsziOWS_Mg=s88-c-k-c0x00ffffff-no-rj",
+   "video_count": 2
+  },
+  {
+   "channel_id": "UC8butISFwT-Wl7EV0hUK0BQ",
+   "title": "freeCodeCamp.org",
+   "thumbnail": "https://yt3.ggpht.com/ytc/AIdro_lGRc-05M2OoE1ejQdxeFhyP7OkJg9h4Y-7CK_5je3QqFI=s88-c-k-c0x00ffffff-no-rj",
+   "video_count": 2
+  },
+  {
+   "channel_id": "UC9Rrud-8CaHokDtK9FszvRg",
+   "title": "Github Awesome",
+   "thumbnail": "https://yt3.ggpht.com/fgdG_4Y5n9M-49-enIA1R_Ot60eJXCceUxKXsgGjSbX240I1gr-Van1Ph78abWJfAL9rIlbRWQ=s88-c-k-c0x00ffffff-no-rj",
+   "video_count": 2
+  },
+  {
+   "channel_id": "UCajiMK_CY9icRhLepS8_3ug",
+   "title": "Alex Ziskind",
+   "thumbnail": "https://yt3.ggpht.com/zm4iOyMJvuuW5Yl52kNTkAq9BcKzuPYP0iqWpNRose4jx4KsXvKrGlRwz6PeSod06luOskFo=s88-c-k-c0x00ffffff-no-rj",
+   "video_count": 2
+  },
+  {
+   "channel_id": "UCi8C7TNs2ohrc6hnRQ5Sn2w",
+   "title": "Kai Lentit",
+   "thumbnail": "https://yt3.ggpht.com/USAYjiKcuDi6fvRLfWaZoMY0hYO9HJtajxEYom8DGDe-vDW8UetZ5Yr6DECCXzYXd5ghRuc3E-o=s88-c-k-c0x00ffffff-no-rj",
+   "video_count": 2
+  },
+  {
+   "channel_id": "UCnoavatar000000000000",
+   "title": "Chris Schutrop",
+   "thumbnail": "",
+   "video_count": 1
+  }
+ ],
+ "videos": [
+  {
+   "video_id": "p0fybvFyOlM",
+   "channel_id": "UCUyeluBRhGPCW4rPe_UvBZQ",
+   "channel_title": "The PrimeTime",
+   "title": "A total disaster",
+   "duration_seconds": 799,
+   "is_short": false,
+   "view_count": 1843211,
+   "url": "https://www.youtube.com/watch?v=p0fybvFyOlM",
+   "thumbnail": "https://i.ytimg.com/vi/p0fybvFyOlM/hqdefault.jpg",
+   "age_hours": 2
+  },
+  {
+   "video_id": "Lo0zrZxpevM",
+   "channel_id": "UCUyeluBRhGPCW4rPe_UvBZQ",
+   "channel_title": "The PrimeTime",
+   "title": "Thoughts on OPUS 5.5",
+   "duration_seconds": 26,
+   "is_short": true,
+   "view_count": 92340,
+   "url": "https://www.youtube.com/watch?v=Lo0zrZxpevM",
+   "thumbnail": "https://i.ytimg.com/vi/Lo0zrZxpevM/hqdefault.jpg",
+   "age_hours": 9
+  },
+  {
+   "video_id": "3iRUwVzRDZQ",
+   "channel_id": "UCBJycsmduvYEL83R_U4JriQ",
+   "channel_title": "Marques Brownlee",
+   "title": "Xiaomi 18 Fold: How Does This Happen?",
+   "duration_seconds": 647,
+   "is_short": false,
+   "view_count": null,
+   "url": "https://www.youtube.com/watch?v=3iRUwVzRDZQ",
+   "thumbnail": "https://i.ytimg.com/vi/3iRUwVzRDZQ/hqdefault.jpg",
+   "age_hours": 27
+  },
+  {
+   "video_id": "e1q-TuHdc4Y",
+   "channel_id": "UCBJycsmduvYEL83R_U4JriQ",
+   "channel_title": "Marques Brownlee",
+   "title": "Dear YouTube!",
+   "duration_seconds": 743,
+   "is_short": false,
+   "view_count": 4120,
+   "url": "https://www.youtube.com/watch?v=e1q-TuHdc4Y",
+   "thumbnail": "https://i.ytimg.com/vi/e1q-TuHdc4Y/hqdefault.jpg",
+   "age_hours": 48
+  },
+  {
+   "video_id": "POylAyrYzTw",
+   "channel_id": "UCyU5wkjgQYGRB0hIHMwm2Sg",
+   "channel_title": "Syntax",
+   "title": "I made a Game Boy game in 2026",
+   "duration_seconds": 1262,
+   "is_short": false,
+   "view_count": 655000,
+   "url": "https://www.youtube.com/watch?v=POylAyrYzTw",
+   "thumbnail": "https://i.ytimg.com/vi/POylAyrYzTw/hqdefault.jpg",
+   "age_hours": 96
+  },
+  {
+   "video_id": "SdJXHYuRr48",
+   "channel_id": "UCyU5wkjgQYGRB0hIHMwm2Sg",
+   "channel_title": "Syntax",
+   "title": "I’m Using GPUI For Everything",
+   "duration_seconds": 1964,
+   "is_short": false,
+   "view_count": 31877,
+   "url": "https://www.youtube.com/watch?v=SdJXHYuRr48",
+   "thumbnail": "https://i.ytimg.com/vi/SdJXHYuRr48/hqdefault.jpg",
+   "age_hours": 144
+  },
+  {
+   "video_id": "MN9dGgmLyso",
+   "channel_id": "UCswG6FSbgZjbWtdf_hMLaow",
+   "channel_title": "Matt Pocock",
+   "title": "LIVE: Poteto (creator of pstack) on shipping 1,000's of PR's a month at SpaceX",
+   "duration_seconds": 4006,
+   "is_short": false,
+   "view_count": 12000000,
+   "url": "https://www.youtube.com/watch?v=MN9dGgmLyso",
+   "thumbnail": "https://i.ytimg.com/vi/MN9dGgmLyso/hqdefault.jpg",
+   "age_hours": 288
+  },
+  {
+   "video_id": "rTojoVotlD8",
+   "channel_id": "UCLKPca3kwwd-B59HNr-_lvA",
+   "channel_title": "AI Engineer",
+   "title": "Your LLM App Returned 200 OK. It Was Still Wrong. — Marina Petzel, Datadog",
+   "duration_seconds": 1081,
+   "is_short": false,
+   "view_count": 870,
+   "url": "https://www.youtube.com/watch?v=rTojoVotlD8",
+   "thumbnail": "https://i.ytimg.com/vi/rTojoVotlD8/hqdefault.jpg",
+   "age_hours": 960
+  },
+  {
+   "video_id": "OE_lLNCNfQo",
+   "channel_id": "UCLKPca3kwwd-B59HNr-_lvA",
+   "channel_title": "AI Engineer",
+   "title": "YOLO Mode, Safely: MicroVM Sandboxes for Any Agent — Rowan Christmas, Docker",
+   "duration_seconds": 695,
+   "is_short": false,
+   "view_count": 241005,
+   "url": "https://www.youtube.com/watch?v=OE_lLNCNfQo",
+   "thumbnail": "https://i.ytimg.com/vi/OE_lLNCNfQo/hqdefault.jpg",
+   "age_hours": 4800
+  },
+  {
+   "video_id": "nqK3oJ682mQ",
+   "channel_id": "UC8butISFwT-Wl7EV0hUK0BQ",
+   "channel_title": "freeCodeCamp.org",
+   "title": "Kotlin Course For Beginners – Full Tutorial",
+   "duration_seconds": 37694,
+   "is_short": false,
+   "view_count": 1843211,
+   "url": "https://www.youtube.com/watch?v=nqK3oJ682mQ",
+   "thumbnail": "https://i.ytimg.com/vi/nqK3oJ682mQ/hqdefault.jpg",
+   "age_hours": 2
+  },
+  {
+   "video_id": "bGALxRWI10A",
+   "channel_id": "UC8butISFwT-Wl7EV0hUK0BQ",
+   "channel_title": "freeCodeCamp.org",
+   "title": "Build your own Mobile App with Codex GPT-6 Astra - Full iOS and Android Course",
+   "duration_seconds": 9350,
+   "is_short": false,
+   "view_count": 92340,
+   "url": "https://www.youtube.com/watch?v=bGALxRWI10A",
+   "thumbnail": "https://i.ytimg.com/vi/bGALxRWI10A/hqdefault.jpg",
+   "age_hours": 9
+  },
+  {
+   "video_id": "v_qRzycVoyg",
+   "channel_id": "UC9Rrud-8CaHokDtK9FszvRg",
+   "channel_title": "Github Awesome",
+   "title": "GitHub Trending Weekly #51: splash, coucou, dscode, onetake, reelmimic, Rungic, kcc, jeeves, zulu",
+   "duration_seconds": 896,
+   "is_short": false,
+   "view_count": null,
+   "url": "https://www.youtube.com/watch?v=v_qRzycVoyg",
+   "thumbnail": "https://i.ytimg.com/vi/v_qRzycVoyg/hqdefault.jpg",
+   "age_hours": 27
+  },
+  {
+   "video_id": "qb3ip0NzJKo",
+   "channel_id": "UC9Rrud-8CaHokDtK9FszvRg",
+   "channel_title": "Github Awesome",
+   "title": "GitHub Trending Today #51: hindsight, reladraw, Whiteboard, NeoHorse, company-brain, CLM, cogsend",
+   "duration_seconds": 891,
+   "is_short": false,
+   "view_count": 4120,
+   "url": "https://www.youtube.com/watch?v=qb3ip0NzJKo",
+   "thumbnail": "https://i.ytimg.com/vi/qb3ip0NzJKo/hqdefault.jpg",
+   "age_hours": 48
+  },
+  {
+   "video_id": "_yrw6c5gw3E",
+   "channel_id": "UCajiMK_CY9icRhLepS8_3ug",
+   "channel_title": "Alex Ziskind",
+   "title": "M5 Ultra vs 2 DGX Sparks… The Number You're Not Looking At",
+   "duration_seconds": 1238,
+   "is_short": false,
+   "view_count": 655000,
+   "url": "https://www.youtube.com/watch?v=_yrw6c5gw3E",
+   "thumbnail": "https://i.ytimg.com/vi/_yrw6c5gw3E/hqdefault.jpg",
+   "age_hours": 96
+  },
+  {
+   "video_id": "A5pLkQBQ8EQ",
+   "channel_id": "UCajiMK_CY9icRhLepS8_3ug",
+   "channel_title": "Alex Ziskind",
+   "title": "The First Thing AI Found Wasn’t an Overcharge",
+   "duration_seconds": 110,
+   "is_short": true,
+   "view_count": 31877,
+   "url": "https://www.youtube.com/watch?v=A5pLkQBQ8EQ",
+   "thumbnail": "https://i.ytimg.com/vi/A5pLkQBQ8EQ/hqdefault.jpg",
+   "age_hours": 144
+  },
+  {
+   "video_id": "oGOHEHuipuA",
+   "channel_id": "UCi8C7TNs2ohrc6hnRQ5Sn2w",
+   "channel_title": "Kai Lentit",
+   "title": "PO gets slandered.",
+   "duration_seconds": 89,
+   "is_short": true,
+   "view_count": 12000000,
+   "url": "https://www.youtube.com/watch?v=oGOHEHuipuA",
+   "thumbnail": "https://i.ytimg.com/vi/oGOHEHuipuA/hqdefault.jpg",
+   "age_hours": 288
+  },
+  {
+   "video_id": "DlTNN0gvkLM",
+   "channel_id": "UCi8C7TNs2ohrc6hnRQ5Sn2w",
+   "channel_title": "Kai Lentit",
+   "title": "AI CEO Interviews (2026)",
+   "duration_seconds": 412,
+   "is_short": false,
+   "view_count": 870,
+   "url": "https://www.youtube.com/watch?v=DlTNN0gvkLM",
+   "thumbnail": "https://i.ytimg.com/vi/DlTNN0gvkLM/hqdefault.jpg",
+   "age_hours": 960
+  },
+  {
+   "video_id": "noavatar1",
+   "channel_id": "UCnoavatar000000000000",
+   "channel_title": "Chris Schutrop",
+   "title": "A channel with no avatar and a deliberately long title so the two-line clamp gets exercised properly in the card",
+   "duration_seconds": 3725,
+   "is_short": false,
+   "view_count": null,
+   "url": "https://www.youtube.com",
+   "thumbnail": "",
+   "age_hours": 7200
+  }
+ ]
+}

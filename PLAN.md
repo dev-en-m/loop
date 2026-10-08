@@ -5,7 +5,7 @@ Tick a slice only after its PR is merged.
 ## Context
 Today the app ingests a hand-curated CSV of channels (`csv/channels_with_ids.csv`) and serves Shorts only via `ui/`. Goal: source channels from the user's own YouTube subscriptions (OAuth), keep all uploads (Shorts flagged), add a new React/Vite list UI with all-channels / per-channel filters, and make the existing `ui/` show only subscribed-channel Shorts **without editing `ui/`**.
 
-Decisions (from user): OAuth subscriptions; single user; one-time CLI consent; all uploads with `is_short` flag; `/api/v1/videos` becomes subscribed-only; new React/Vite UI in own folder; uploads-playlist ingestion; daily run, 10-day window.
+Decisions (from user): OAuth subscriptions; single user; one-time CLI consent; all uploads with `is_short` flag; `/api/v1/videos` becomes subscribed-only; new React/Vite UI in own folder; uploads-playlist ingestion; daily run, 30-day first backfill.
 
 ## Backend (`api/`)
 1. **`api/auth_youtube.py`** (new, run once): `google-auth-oauthlib` InstalledAppFlow, scope `youtube.readonly`, saves refresh token to `DATA_DIR/token.json` (gitignored). Needs `GOOGLE_OAUTH_CLIENT_FILE` in `.env.example`.

@@ -5,6 +5,11 @@ const API_ENDPOINT = (() => {
   return el?.content || `${window.location.origin}/api/v1/videos`;
 })();
 
+const EVENTS_ENDPOINT = new URL("events", API_ENDPOINT).toString();
+// Page-load time: the API reshuffles per session and freezes watch history at this point,
+// so paging stays consistent while new watches only reorder the next visit.
+const SESSION = String(Date.now());
+
 const PAGE_SIZE = 30;
 const LOAD_AHEAD = 5;
 
@@ -26,6 +31,7 @@ async function fetchVideos() {
   isFetching = true;
   const url = new URL(API_ENDPOINT);
   url.searchParams.set("limit", String(PAGE_SIZE));
+  url.searchParams.set("session", SESSION);
   if (nextCursor) url.searchParams.set("after", nextCursor);
 
   try {
@@ -96,7 +102,25 @@ function createPlayer(index, videoId) {
   }));
 }
 
+function reportWatch(index) {
+  const videoId = videoIds[index];
+  if (!videoId) return;
+
+  let ratio = 0; // player not ready yet = skipped before it loaded
+  try {
+    const player = players.get(index);
+    const duration = player.getDuration();
+    if (duration > 0) ratio = Math.min(1, player.getCurrentTime() / duration);
+  } catch (_) {}
+
+  const url = new URL(EVENTS_ENDPOINT);
+  url.searchParams.set("video_id", videoId);
+  url.searchParams.set("watch_ratio", ratio.toFixed(3));
+  fetch(url.toString(), { method: "POST", keepalive: true }).catch(() => {});
+}
+
 function playOnly(index) {
+  if (index !== activeIndex && activeIndex >= 0) reportWatch(activeIndex);
   activeIndex = index;
 
   for (const [playerIndex, player] of players) {

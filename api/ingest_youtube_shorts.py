@@ -187,7 +187,7 @@ def ingest_channel(db, api_key, channel, state, run_started_at):
     if last_run:
         since = datetime.fromisoformat(last_run.replace("Z", "+00:00")) - OVERLAP
     else:
-        since = run_started_at - timedelta(days=10)
+        since = run_started_at - timedelta(days=30)
     published_after = since.isoformat().replace("+00:00", "Z")
 
     run_started_at_iso = run_started_at.isoformat().replace("+00:00", "Z")

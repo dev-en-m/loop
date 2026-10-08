@@ -18,20 +18,23 @@ def test_feed_only_subscribed_shorts():
 
         db = sqlite3.connect(main.DB_PATH)
         db.execute("CREATE TABLE subscriptions (channel_id TEXT PRIMARY KEY)")
-        db.execute("CREATE TABLE videos (video_id TEXT, channel_id TEXT, published_at TEXT, is_short INTEGER)")
+        db.execute("CREATE TABLE videos (video_id TEXT, channel_id TEXT, published_at TEXT, is_short INTEGER, view_count INTEGER)")
         db.execute("INSERT INTO subscriptions VALUES ('sub')")
-        db.executemany("INSERT INTO videos VALUES (?,?,?,?)", [
-            ("s1", "sub", "2026-01-01", 1),
-            ("s2", "sub", "2026-01-02", 1),
-            ("long", "sub", "2026-01-03", 0),      # not a short
-            ("other", "nosub", "2026-01-04", 1),   # not subscribed
-            ("t2", "sub", "2026-01-02", 1),        # same published_at as s2: tiebreak by video_id
+        db.executemany("INSERT INTO videos VALUES (?,?,?,?,?)", [
+            ("s1", "sub", "2026-01-01", 1, None),
+            ("s2", "sub", "2026-01-02T10:00:00Z", 1, 5),
+            ("long", "sub", "2026-01-03", 0, 5),      # not a short
+            ("other", "nosub", "2026-01-04", 1, 5),   # not subscribed
+            ("t2", "sub", "2026-01-02", 1, 5),
         ])
         db.commit()
-        assert main.get_videos()["data"] == ["s2", "t2", "s1"]
+        full = main.get_videos()["data"]
+        assert sorted(full) == ["s1", "s2", "t2"]
         page = main.get_videos(limit=1)
-        assert page["data"] == ["s2"] and page["hasMore"] and page["nextCursor"] == 1
-        assert main.get_videos(limit=1, after=1)["data"] == ["t2"]  # no repeat or skip across pages
+        assert page["data"] == full[:1] and page["hasMore"] and page["nextCursor"] == 1
+        # no repeat or skip across pages
+        assert [main.get_videos(limit=1, after=i)["data"][0] for i in range(3)] == full
+        assert main.get_videos(limit=1, after=2)["hasMore"] is False
 
         # an old-schema db must fail loudly, not look like an empty feed
         db.execute("ALTER TABLE videos RENAME COLUMN is_short TO is_short_old")
@@ -41,6 +44,35 @@ def test_feed_only_subscribed_shorts():
             assert False, "expected OperationalError"
         except sqlite3.OperationalError:
             pass
+
+
+def test_rank_feed():
+    from datetime import datetime, timezone
+    now = datetime(2026, 2, 1, tzinfo=timezone.utc)
+    row = lambda i, c, d, v=None: {"video_id": i, "channel_id": c, "published_at": d, "view_count": v}
+    rows = [
+        row("a_new", "a", "2026-01-31T12:00:00Z"),
+        row("a_new2", "a", "2026-01-31T11:00:00Z"),
+        row("a_new3", "a", "2026-01-31T10:00:00Z"),
+        row("b_old", "b", "2025-12-01T00:00:00Z"),
+        row("c_old", "c", "2025-12-02T00:00:00Z"),
+    ]
+    ranked = main.rank_feed(rows, now, "2026-02-01")
+    assert sorted(ranked) == sorted(r["video_id"] for r in rows)
+    assert ranked[0].startswith("a_new")  # 2 months old can't beat 1 day old, even with jitter
+    channels = [i[0] for i in ranked]
+    assert all(x != y for x, y in zip(channels, channels[1:])), channels  # a's run is split by b and c
+    assert ranked == main.rank_feed(rows, now, "2026-02-01")  # same day, same order
+
+    # jitter reshuffles videos of similar age from day to day
+    same_age = [row(f"v{n}", f"ch{n}", "2026-01-31T00:00:00Z") for n in range(20)]
+    assert main.rank_feed(same_age, now, "day1") != main.rank_feed(same_age, now, "day2")
+
+    # a short far above its channel's average outranks a same-age dud
+    hot = [row("hot", "a", "2026-01-31", 100_000), row("dud", "b", "2026-01-31", 10)] + \
+          [row(f"a{n}", "a", "2026-01-31", 100) for n in range(5)] + [row("b1", "b", "2026-01-31", 100_000)]
+    ranked = main.rank_feed(hot, now, "s")
+    assert ranked.index("hot") < ranked.index("dud")
 
 
 def test_channels_and_library():
@@ -111,6 +143,7 @@ def test_origin_lock():
 
 if __name__ == "__main__":
     test_feed_only_subscribed_shorts()
+    test_rank_feed()
     test_channels_and_library()
     test_origin_lock()
     print("ok")

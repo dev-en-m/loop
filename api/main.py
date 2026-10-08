@@ -1,5 +1,8 @@
 import sqlite3
 import os
+import zlib
+from collections import defaultdict
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Literal, Optional
 from typing_extensions import Annotated
@@ -67,14 +70,52 @@ def get_videos(
     after: Annotated[int, Query(ge=0)] = 0,
 ):
     rows = query("""
-        SELECT v.video_id
+        SELECT v.video_id, v.channel_id, v.published_at, v.view_count
         FROM videos v
         JOIN subscriptions s ON s.channel_id = v.channel_id
         WHERE v.is_short = 1
-        ORDER BY v.published_at DESC, v.video_id
-        LIMIT ? OFFSET ?
-    """, (limit + 1, after))
-    return page([row[0] for row in rows], limit, after)
+    """)
+    # ponytail: ranks every short per request, cache by (day, row count) if the table gets big.
+    # Seeded by UTC day so offset paging is stable within a day; a mid-day ingest can shift pages once.
+    now = datetime.now(timezone.utc)
+    ranked = rank_feed(rows, now, now.date().isoformat())
+    return page(ranked[after:after + limit + 1], limit, after)
+
+
+HALF_LIFE_DAYS = 7  # a week-old short scores half of a new one
+
+
+def rank_feed(rows, now, seed):
+    """Order video ids by freshness * hotness * daily jitter, never the same channel twice in a row."""
+    views_by_channel = defaultdict(list)
+    for r in rows:
+        if r["view_count"] is not None:
+            views_by_channel[r["channel_id"]].append(r["view_count"])
+    avg_views = {c: sum(v) / len(v) for c, v in views_by_channel.items()}
+
+    def score(r):
+        published = datetime.fromisoformat(r["published_at"].replace("Z", "+00:00"))
+        if published.tzinfo is None:
+            published = published.replace(tzinfo=timezone.utc)
+        age_days = max(0.0, (now - published).total_seconds() / 86400)
+        freshness = 0.5 ** (age_days / HALF_LIFE_DAYS)
+        hotness = 1.0
+        if r["view_count"] is not None:  # beating its own channel's average = hot
+            hotness = min(2.0, max(0.5, ((r["view_count"] + 1) / (avg_views[r["channel_id"]] + 1)) ** 0.3))
+        # crc32, not hash(): hash() is salted per process, so workers would disagree on the order
+        jitter = 0.5 + zlib.crc32(f"{seed}:{r['video_id']}".encode()) / 2**32
+        return freshness * hotness * jitter
+
+    out, held = [], []  # held: items waiting because their channel just played
+    for r in sorted(rows, key=score, reverse=True):
+        held.append(r)
+        while held:
+            i = next((k for k, h in enumerate(held) if not out or h["channel_id"] != out[-1]["channel_id"]), None)
+            if i is None:
+                break
+            out.append(held.pop(i))
+    out += held  # only one channel left, nothing to interleave with
+    return [r["video_id"] for r in out]
 
 
 @app.get("/api/v1/channels")

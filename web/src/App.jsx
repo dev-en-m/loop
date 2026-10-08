@@ -12,7 +12,11 @@ const SORTS = [
   ["oldest", "Oldest first"],
 ];
 
+// dev only: ?mock serves web/src/mock.js instead of the API (dropped from prod builds)
+const MOCK = import.meta.env.DEV && new URLSearchParams(location.search).has("mock");
+
 async function getJson(path, params = {}, signal) {
+  if (MOCK) return (await import("./mock.js")).default(path, params);
   const url = new URL(`${API}${path}`);
   Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
   const res = await fetch(url, { signal });
@@ -25,6 +29,22 @@ function formatDuration(total) {
   const m = Math.floor((total % 3600) / 60);
   const s = String(total % 60).padStart(2, "0");
   return h ? `${h}:${String(m).padStart(2, "0")}:${s}` : `${m}:${s}`;
+}
+
+const relative = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
+
+// "just now", "17 minutes ago", "2 days ago"; plain date once it is over a month old
+function formatWhen(iso) {
+  const mins = Math.round((Date.now() - new Date(iso)) / 6e4);
+  if (mins < 1) return "just now";
+  if (mins < 60) return relative.format(-mins, "minute");
+  if (mins < 1440) return relative.format(-Math.round(mins / 60), "hour");
+  if (mins < 43200) return relative.format(-Math.round(mins / 1440), "day");
+  return new Date(iso).toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" });
+}
+
+function initials(name) {
+  return name.split(/\s+/).slice(0, 2).map((w) => w[0]).join("").toUpperCase();
 }
 
 export default function App() {
@@ -109,20 +129,30 @@ export default function App() {
       {!loading && !error && videos.length === 0 && <p className="empty">No videos.</p>}
 
       <div className="grid">
-        {videos.map((v) => (
-          <a key={v.video_id} className="card" href={v.url} target="_blank" rel="noreferrer">
-            <div className="thumb">
-              <img src={v.thumbnail} alt="" loading="lazy" />
-              <span>{formatDuration(v.duration_seconds)}</span>
-            </div>
-            <h3>{v.title}</h3>
-            <p>
-              {v.channel_title} · {new Date(v.published_at).toLocaleDateString()}
-              {v.view_count != null && ` · ${v.view_count.toLocaleString()} views`}
-              {v.is_short && " · Short"}
-            </p>
-          </a>
-        ))}
+        {videos.map((v) => {
+          const avatar = channels.find((c) => c.channel_id === v.channel_id)?.thumbnail;
+          const fresh = Date.now() - new Date(v.published_at) < 864e5;
+          return (
+            <a key={v.video_id} className="card" href={v.url} target="_blank" rel="noreferrer">
+              <div className="thumb">
+                {v.thumbnail && <img src={v.thumbnail} alt="" loading="lazy" />}
+                <span>{formatDuration(v.duration_seconds)}</span>
+              </div>
+              <div className="top">
+                <div className="avatar">
+                  {avatar ? <img src={avatar} alt="" loading="lazy" /> : initials(v.channel_title)}
+                </div>
+                <strong>{v.channel_title}</strong>
+                <span className="tag">{fresh && "New "}{v.is_short ? "Short" : "Video"}</span>
+              </div>
+              <h3>{v.title}</h3>
+              <p>
+                <time dateTime={v.published_at}>{formatWhen(v.published_at)}</time>
+                {v.view_count != null && ` · ${v.view_count.toLocaleString()} views`}
+              </p>
+            </a>
+          );
+        })}
       </div>
 
       {cursor !== null && (

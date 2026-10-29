@@ -6,6 +6,7 @@ const KINDS = [
   ["short", "Shorts"],
   ["long", "Long"],
 ];
+const INITIAL = "D"; // placeholder until real login exists
 const SORTS = [
   ["recent", "Most recent"],
   ["views", "Most viewed"],
@@ -56,7 +57,9 @@ export default function App() {
   const [cursor, setCursor] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [playing, setPlaying] = useState(null); // the video open in the popup
   const controller = useRef(null);
+  const dialog = useRef(null);
 
   useEffect(() => {
     getJson("/api/v1/channels").then(setChannels).catch((e) => setError(e.message));
@@ -95,6 +98,19 @@ export default function App() {
     return () => controller.current?.abort();
   }, [channelId, kind, sort]);
 
+  useEffect(() => {
+    const d = dialog.current;
+    if (playing && !d.open) d.showModal();
+    if (!playing && d.open) d.close();
+  }, [playing]);
+
+  // a plain click plays in the popup; modified clicks keep the normal new-tab link
+  function open(e, v) {
+    if (e.button || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    e.preventDefault();
+    setPlaying(v);
+  }
+
   return (
     <main>
       <header>
@@ -123,6 +139,8 @@ export default function App() {
             </button>
           ))}
         </div>
+        <button className="account" popovertarget="account" aria-label="Account">{INITIAL}</button>
+        <div id="account" popover="auto">Try your own YouTube feed. Coming soon.</div>
       </header>
 
       {error && <p className="error">Could not load: {error}</p>}
@@ -133,7 +151,7 @@ export default function App() {
           const avatar = channels.find((c) => c.channel_id === v.channel_id)?.thumbnail;
           const fresh = Date.now() - new Date(v.published_at) < 864e5;
           return (
-            <a key={v.video_id} className="card" href={v.url} target="_blank" rel="noreferrer">
+            <a key={v.video_id} className="card" href={v.url} target="_blank" rel="noreferrer" onClick={(e) => open(e, v)}>
               <div className="thumb">
                 {v.thumbnail && <img src={v.thumbnail} alt="" loading="lazy" />}
                 <span>{formatDuration(v.duration_seconds)}</span>
@@ -160,6 +178,30 @@ export default function App() {
           {loading ? "Loading..." : "Load more"}
         </button>
       )}
+
+      {/* the iframe exists only while playing, so closing stops the video */}
+      <dialog
+        ref={dialog}
+        className="player"
+        onClose={() => setPlaying(null)}
+        onClick={(e) => e.target === e.currentTarget && setPlaying(null)}
+      >
+        {playing && (
+          <div className={playing.is_short ? "frame tall" : "frame"}>
+            <iframe
+              title={playing.title}
+              src={`https://www.youtube-nocookie.com/embed/${playing.video_id}?autoplay=1&rel=0&playsinline=1`}
+              allow="autoplay; encrypted-media; fullscreen"
+              allowFullScreen
+            />
+            <div className="bar">
+              <strong>{playing.title}</strong>
+              <a href={playing.url} target="_blank" rel="noreferrer">Open on YouTube</a>
+              <button onClick={() => setPlaying(null)}>Close</button>
+            </div>
+          </div>
+        )}
+      </dialog>
     </main>
   );
 }

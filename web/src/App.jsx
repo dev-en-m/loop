@@ -50,7 +50,7 @@ function initials(name) {
 export default function App() {
   const [channels, setChannels] = useState([]);
   const [channelId, setChannelId] = useState("");
-  const [kind, setKind] = useState("all");
+  const [kind, setKind] = useState("long");
   const [sort, setSort] = useState("recent");
   const [videos, setVideos] = useState([]);
   const [cursor, setCursor] = useState(null);

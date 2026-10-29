@@ -6,6 +6,7 @@ const KINDS = [
   ["short", "Shorts"],
   ["long", "Long"],
 ];
+const INITIAL = "D"; // placeholder until real login exists
 const SORTS = [
   ["recent", "Most recent"],
   ["views", "Most viewed"],
@@ -138,6 +139,8 @@ export default function App() {
             </button>
           ))}
         </div>
+        <button className="account" popovertarget="account" aria-label="Account">{INITIAL}</button>
+        <div id="account" popover="auto">Try your own YouTube feed. Coming soon.</div>
       </header>
 
       {error && <p className="error">Could not load: {error}</p>}

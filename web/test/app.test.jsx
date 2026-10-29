@@ -87,3 +87,13 @@ test("the list starts on the Long filter", async () => {
   await card("Long one");
   expect(screen.getByRole("button", { name: "Long" }).getAttribute("aria-pressed")).toBe("true");
 });
+
+test("the account icon shows the initial and points at the coming-soon popover", async () => {
+  render(<App />);
+  await card("Long one");
+  const icon = screen.getByRole("button", { name: "Account" });
+  expect(icon.textContent).toBe("D");
+  const pop = document.getElementById(icon.getAttribute("popovertarget"));
+  expect(pop.hasAttribute("popover")).toBe(true);
+  expect(pop.textContent).toBe("Try your own YouTube feed. Coming soon.");
+});

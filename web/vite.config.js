@@ -5,5 +5,5 @@ export default defineConfig(({ mode }) => {
   if (mode === "production" && !loadEnv(mode, ".", "VITE_").VITE_API_BASE) {
     throw new Error("VITE_API_BASE is not set: set it in the Netlify site env vars");
   }
-  return { plugins: [react()] };
+  return { plugins: [react()], test: { environment: "jsdom", include: ["test/**/*.test.jsx"] } };
 });

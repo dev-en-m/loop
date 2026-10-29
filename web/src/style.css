@@ -126,3 +126,14 @@ select:focus-visible, button:focus-visible, .card:focus-visible { outline: 3px s
 @media (prefers-reduced-motion: reduce) {
   .card, select, button { transition: none; }
 }
+
+/* popup player */
+.player { padding: 0; border: 2px solid var(--ink); border-radius: 18px; box-shadow: 8px 8px 0 var(--ink); background: var(--paper); overflow: hidden; }
+.player::backdrop { background: rgb(0 0 0 / 60%); }
+.frame { width: min(90vw, 960px); }
+.frame.tall { width: min(90vw, calc(80vh * 9 / 16)); }
+.frame iframe { display: block; width: 100%; aspect-ratio: 16 / 9; border: 0; background: #000; }
+.frame.tall iframe { aspect-ratio: 9 / 16; }
+.bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; padding: 12px 16px; }
+.bar strong { flex: 1 1 200px; min-width: 0; font-size: 14px; }
+.bar a { color: var(--fg); font-weight: 600; }

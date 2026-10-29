@@ -32,7 +32,7 @@ body {
   font: 16px/1.45 "Bricolage Grotesque", system-ui, sans-serif;
   background: var(--bg) radial-gradient(var(--dot) 1px, transparent 1.5px) 0 0 / 22px 22px;
 }
-main { max-width: 1200px; margin: 0 auto; padding: 20px 16px 40px; }
+main { width: 90%; margin: 0 auto; padding: 20px 0 40px; }
 
 header { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 28px; position: sticky; top: 0; z-index: 2; margin-inline: -12px; padding: 14px 12px; /* wider than the board so its shadow can't poke out */ background: var(--bg); border-bottom: 2px solid var(--fg); }
 select, button {
